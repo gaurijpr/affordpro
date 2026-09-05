@@ -1,0 +1,183 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String     @id @default(uuid())
+  name         String
+  email        String     @unique
+  phone        String?
+  passwordHash String
+  role         String     @default("USER") // USER | ADMIN
+  avatar       String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  orders       Order[]
+  reviews      Review[]
+  wishlists    Wishlist[]
+}
+
+model Category {
+  id           String    @id @default(uuid())
+  name         String
+  slug         String    @unique
+  description  String?
+  icon         String    @default("Folder")
+  image        String?
+  productCount Int       @default(0)
+  displayOrder Int       @default(0)
+  featured     Boolean   @default(false)
+  active       Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  products     Product[]
+}
+
+model Product {
+  id               String      @id @default(uuid())
+  slug             String      @unique
+  title            String
+  shortDescription String
+  fullDescription  String
+  categoryId       String
+  category         Category    @relation(fields: [categoryId], references: [id])
+  productType      String      // DIGITAL_PRODUCT | TEMPLATE | COURSE | SERVICE | BUNDLE
+  images           String      // JSON string array e.g. '["url1", "url2"]'
+  video            String?
+  price            Float
+  compareAtPrice   Float?
+  discount         Float?
+  currency         String      @default("₹")
+  rating           Float       @default(5.0)
+  reviewCount      Int         @default(0)
+  features         String      // JSON string array
+  whatIsIncluded   String      // JSON string array
+  whoIsThisFor     String      // JSON string array
+  requirements     String      // JSON string array
+  format           String?
+  deliveryMethod   String?
+  deliveryTime     String?
+  accessDuration   String?
+  courseDuration   String?
+  lessons          Int?
+  level            String?
+  tags             String      // JSON string array
+  status           String      @default("IN_STOCK") // IN_STOCK | OUT_OF_STOCK | PRE_ORDER
+  downloadable     Boolean     @default(true)
+  serviceBased     Boolean     @default(false)
+  featured         Boolean     @default(false)
+  bestSeller       Boolean     @default(false)
+  newArrival       Boolean     @default(false)
+  fileSize         String?
+  templateCount    Int?
+  downloadUrl      String?
+  active           Boolean     @default(true)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  orderItems       OrderItem[]
+  reviews          Review[]
+  wishlists        Wishlist[]
+}
+
+model Order {
+  id                String        @id @default(uuid())
+  orderNumber       String        @unique
+  userId            String?
+  user              User?         @relation(fields: [userId], references: [id])
+  customerName      String
+  customerEmail     String
+  customerPhone     String?
+  subtotal          Float
+  discount          Float         @default(0)
+  tax               Float         @default(0)
+  total             Float
+  paymentMethod     String        @default("RAZORPAY")
+  paymentStatus     String        @default("UNPAID") // UNPAID | PAID | REFUNDED | FAILED
+  orderStatus       String        @default("PENDING") // PENDING | PROCESSING | COMPLETED | CANCELLED
+  couponCode        String?
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  items             OrderItem[]
+  services          ServiceOrder[]
+}
+
+model OrderItem {
+  id           String   @id @default(uuid())
+  orderId      String
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId    String
+  product      Product  @relation(fields: [productId], references: [id])
+  productTitle String
+  productImage String
+  productType  String
+  price        Float
+  quantity     Int      @default(1)
+  downloadUrl  String?
+  accessUrl    String?
+}
+
+model ServiceOrder {
+  id           String    @id @default(uuid())
+  orderId      String    @unique
+  order        Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status       String    @default("PENDING") // PENDING | CONFIRMED | IN_PROGRESS | DELIVERED | COMPLETED | CANCELLED
+  requirements String?
+  notes        String?
+  deliveredAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Coupon {
+  id             String   @id @default(uuid())
+  code           String   @unique
+  discountType   String   @default("percentage") // percentage | fixed
+  discountValue  Float
+  minOrderAmount Float?
+  maxDiscount    Float?
+  description    String
+  expiryDate     DateTime
+  usageLimit     Int?
+  usageCount     Int      @default(0)
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Review {
+  id               String   @id @default(uuid())
+  productId        String
+  product          Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId           String?
+  user             User?    @relation(fields: [userId], references: [id])
+  userName         String
+  userAvatar       String?
+  rating           Int      // 1-5
+  title            String
+  comment          String
+  verifiedPurchase Boolean  @default(true)
+  approved         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+}
+
+model Wishlist {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+}
