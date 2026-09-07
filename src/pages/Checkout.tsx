@@ -176,61 +176,20 @@ export const Checkout: React.FC = () => {
             </div>
           </div>
 
-          {/* Payment Gateway Options */}
-          <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 card-shadow space-y-4">
-            <h2 className="text-xl font-black text-slate-900 pb-3 border-b border-slate-100 flex items-center gap-2">
-              <span className="w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 text-xs flex items-center justify-center font-bold">2</span>
-              Payment Method
-            </h2>
-
-            <div className="space-y-3">
-              {/* Cashfree Payments */}
-              <label
-                onClick={() => setPaymentGateway('CASHFREE')}
-                className={`flex items-center justify-between p-4 rounded-2xl border-2 cursor-pointer transition-all ${
-                  paymentGateway === 'CASHFREE'
-                    ? 'border-indigo-600 bg-indigo-50/50 shadow-xs'
-                    : 'border-slate-200 hover:border-slate-300'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-emerald-600 text-white rounded-xl shadow-xs">
-                    <CreditCard className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="font-extrabold text-slate-900 text-sm flex items-center gap-2">
-                      <span>Cashfree Payments (Live)</span>
-                      <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-extrabold text-[9px] rounded-full uppercase">Instant UPI & Cards</span>
-                    </div>
-                    <div className="text-xs text-slate-500 font-medium">Google Pay, PhonePe, Paytm, QR Code, Cards & NetBanking</div>
-                  </div>
+            {/* Instant Cashfree Trust Badge */}
+            <div className="pt-3 border-t border-slate-100 flex items-center gap-3 bg-emerald-50/60 p-4 rounded-2xl border border-emerald-100">
+              <div className="p-2.5 bg-emerald-600 text-white rounded-xl shadow-xs">
+                <CreditCard className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="font-extrabold text-slate-900 text-xs flex items-center gap-2">
+                  <span>Cashfree Secure Payment Gateway</span>
+                  <span className="px-2 py-0.5 bg-emerald-200 text-emerald-900 font-extrabold text-[9px] rounded-full uppercase">Instant Auto Gateway</span>
                 </div>
-                <input type="radio" checked={paymentGateway === 'CASHFREE'} readOnly className="w-4 h-4 text-indigo-600" />
-              </label>
-
-              {/* Direct UPI */}
-              <label
-                onClick={() => setPaymentGateway('UPI')}
-                className={`flex items-center justify-between p-4 rounded-2xl border-2 cursor-pointer transition-all ${
-                  paymentGateway === 'UPI'
-                    ? 'border-indigo-600 bg-indigo-50/50'
-                    : 'border-slate-200 hover:border-slate-300'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-emerald-600 text-white rounded-xl">
-                    <Sparkles className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="font-bold text-slate-900 text-sm">Direct UPI / QR Code</div>
-                    <div className="text-xs text-slate-500">Scan QR Code & Pay</div>
-                  </div>
-                </div>
-                <input type="radio" checked={paymentGateway === 'UPI'} readOnly className="w-4 h-4 text-indigo-600" />
-              </label>
+                <div className="text-[11px] text-slate-500 font-medium mt-0.5">Google Pay, PhonePe, Paytm, QR Code, Cards & NetBanking</div>
+              </div>
             </div>
           </div>
-        </div>
 
         {/* Right Column: Summary & Checkout Button */}
         <div className="lg:col-span-5 bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 card-shadow space-y-6">
