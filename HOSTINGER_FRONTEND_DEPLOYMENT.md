@@ -70,7 +70,7 @@ The frontend communicates with your live backend using the environment variable:
 VITE_API_BASE_URL
 ```
 
-* **Current Placeholder**: `https://api.affordpro.com/api/v1`
+* **Current Placeholder**: `https://api.affordpro.shop/api/v1`
 * **Development Local URL**: `http://localhost:5000/api/v1`
 
 ### How to update the Production API URL in the future:
