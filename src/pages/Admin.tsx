@@ -26,8 +26,8 @@ export const Admin: React.FC = () => {
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
     return localStorage.getItem('affordpro_admin_authed') === 'true' || user?.role === 'ADMIN';
   });
-  const [adminLoginUsername, setAdminLoginUsername] = useState('Affordprojpr');
-  const [adminLoginPassword, setAdminLoginPassword] = useState('Affordpro@#4450');
+  const [adminLoginUsername, setAdminLoginUsername] = useState('');
+  const [adminLoginPassword, setAdminLoginPassword] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   // Admin Credentials Management State
@@ -50,7 +50,10 @@ export const Admin: React.FC = () => {
 
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!adminLoginUsername.trim() || !adminLoginPassword.trim()) {
+    const inputUser = adminLoginUsername.trim();
+    const inputPass = adminLoginPassword.trim();
+
+    if (!inputUser || !inputPass) {
       showToast('Please enter both username and password.', 'error');
       return;
     }
@@ -61,50 +64,50 @@ export const Admin: React.FC = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          username: adminLoginUsername.trim(),
-          email: adminLoginUsername.trim(),
-          password: adminLoginPassword.trim(),
+          username: inputUser,
+          email: inputUser,
+          password: inputPass,
         }),
       });
 
       const data = await res.json();
-      if (res.ok && data.token) {
+      if (res.ok && data.token && data.user?.role === 'ADMIN') {
         localStorage.setItem('affordpro_token', data.token);
         localStorage.setItem('affordpro_admin_authed', 'true');
-        const userObj = data.user.name || adminLoginUsername.trim();
+        const userObj = data.user.name || inputUser;
         localStorage.setItem('affordpro_admin_user', userObj);
         setAdminUsername(userObj);
         setNewAdminUsername(userObj);
         setIsAdminAuthenticated(true);
-        showToast('Admin login successful! Welcome to AffordPro Control Panel.', 'success');
+        showToast('Admin login successful!', 'success');
         return;
       }
 
-      // Local fallback verification for default credentials
-      const savedUser = localStorage.getItem('affordpro_admin_user') || 'Affordprojpr';
-      const savedPass = localStorage.getItem('affordpro_admin_pass') || 'Affordpro@#4450';
+      // Local fallback verification matching ONLY active updated credentials
+      const activeUser = localStorage.getItem('affordpro_admin_user') || 'Affordprojpr';
+      const activePass = localStorage.getItem('affordpro_admin_pass') || 'Affordpro@#4450';
 
-      if (
-        (adminLoginUsername.trim().toLowerCase() === savedUser.toLowerCase() || adminLoginUsername.trim() === 'Affordprojpr') &&
-        (adminLoginPassword.trim() === savedPass || adminLoginPassword.trim() === 'Affordpro@#4450')
-      ) {
+      const userMatches = inputUser.toLowerCase() === activeUser.toLowerCase();
+      const passMatches = inputPass === activePass;
+
+      if (userMatches && passMatches) {
         localStorage.setItem('affordpro_admin_authed', 'true');
-        localStorage.setItem('affordpro_admin_user', savedUser);
+        localStorage.setItem('affordpro_admin_user', activeUser);
         setIsAdminAuthenticated(true);
         showToast('Admin login successful!', 'success');
       } else {
         showToast(data.message || 'Invalid username or password.', 'error');
       }
     } catch (err: any) {
-      const savedUser = localStorage.getItem('affordpro_admin_user') || 'Affordprojpr';
-      const savedPass = localStorage.getItem('affordpro_admin_pass') || 'Affordpro@#4450';
+      const activeUser = localStorage.getItem('affordpro_admin_user') || 'Affordprojpr';
+      const activePass = localStorage.getItem('affordpro_admin_pass') || 'Affordpro@#4450';
 
-      if (
-        (adminLoginUsername.trim().toLowerCase() === savedUser.toLowerCase() || adminLoginUsername.trim() === 'Affordprojpr') &&
-        (adminLoginPassword.trim() === savedPass || adminLoginPassword.trim() === 'Affordpro@#4450')
-      ) {
+      const userMatches = inputUser.toLowerCase() === activeUser.toLowerCase();
+      const passMatches = inputPass === activePass;
+
+      if (userMatches && passMatches) {
         localStorage.setItem('affordpro_admin_authed', 'true');
-        localStorage.setItem('affordpro_admin_user', savedUser);
+        localStorage.setItem('affordpro_admin_user', activeUser);
         setIsAdminAuthenticated(true);
         showToast('Admin login successful!', 'success');
       } else {
@@ -123,12 +126,15 @@ export const Admin: React.FC = () => {
 
   const handleUpdateCredentials = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newAdminUsername.trim()) {
+    const updatedUser = newAdminUsername.trim();
+    const updatedPass = newAdminPassword.trim();
+
+    if (!updatedUser) {
       showToast('Username cannot be empty.', 'error');
       return;
     }
 
-    if (newAdminPassword && newAdminPassword !== confirmAdminPassword) {
+    if (updatedPass && updatedPass !== confirmAdminPassword.trim()) {
       showToast('New passwords do not match!', 'error');
       return;
     }
@@ -143,45 +149,51 @@ export const Admin: React.FC = () => {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
-          newUsername: newAdminUsername.trim(),
-          newPassword: newAdminPassword ? newAdminPassword.trim() : undefined,
-          currentPassword: currentAdminPassword,
+          newUsername: updatedUser,
+          newPassword: updatedPass || undefined,
+          currentPassword: currentAdminPassword.trim(),
         }),
       });
 
       const data = await res.json();
       if (res.ok && data.success) {
-        const updatedName = data.admin?.username || newAdminUsername.trim();
-        localStorage.setItem('affordpro_admin_user', updatedName);
-        if (newAdminPassword.trim()) {
-          localStorage.setItem('affordpro_admin_pass', newAdminPassword.trim());
+        const finalName = data.admin?.username || updatedUser;
+        localStorage.setItem('affordpro_admin_user', finalName);
+        if (updatedPass) {
+          localStorage.setItem('affordpro_admin_pass', updatedPass);
         }
-        setAdminUsername(updatedName);
+        localStorage.setItem('affordpro_admin_custom_set', 'true');
+
+        setAdminUsername(finalName);
         setCurrentAdminPassword('');
         setNewAdminPassword('');
         setConfirmAdminPassword('');
-        showToast('Admin username and password updated successfully!', 'success');
+        showToast('Admin credentials updated! Old credentials are now invalid.', 'success');
       } else {
-        localStorage.setItem('affordpro_admin_user', newAdminUsername.trim());
-        if (newAdminPassword.trim()) {
-          localStorage.setItem('affordpro_admin_pass', newAdminPassword.trim());
+        localStorage.setItem('affordpro_admin_user', updatedUser);
+        if (updatedPass) {
+          localStorage.setItem('affordpro_admin_pass', updatedPass);
         }
-        setAdminUsername(newAdminUsername.trim());
+        localStorage.setItem('affordpro_admin_custom_set', 'true');
+
+        setAdminUsername(updatedUser);
         setCurrentAdminPassword('');
         setNewAdminPassword('');
         setConfirmAdminPassword('');
-        showToast('Admin credentials saved successfully!', 'success');
+        showToast('Admin credentials updated! Old credentials are now invalid.', 'success');
       }
     } catch (err: any) {
-      localStorage.setItem('affordpro_admin_user', newAdminUsername.trim());
-      if (newAdminPassword.trim()) {
-        localStorage.setItem('affordpro_admin_pass', newAdminPassword.trim());
+      localStorage.setItem('affordpro_admin_user', updatedUser);
+      if (updatedPass) {
+        localStorage.setItem('affordpro_admin_pass', updatedPass);
       }
-      setAdminUsername(newAdminUsername.trim());
+      localStorage.setItem('affordpro_admin_custom_set', 'true');
+
+      setAdminUsername(updatedUser);
       setCurrentAdminPassword('');
       setNewAdminPassword('');
       setConfirmAdminPassword('');
-      showToast('Admin credentials saved successfully!', 'success');
+      showToast('Admin credentials saved! Old credentials are now invalid.', 'success');
     } finally {
       setIsUpdatingCredentials(false);
     }
@@ -709,11 +721,6 @@ export const Admin: React.FC = () => {
               Unlock Admin Panel
             </Button>
           </form>
-
-          <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl text-[11px] text-slate-400 font-medium text-center space-y-1">
-            <div>Default Username: <span className="font-bold text-indigo-400">Affordprojpr</span></div>
-            <div>Default Password: <span className="font-bold text-indigo-400">Affordpro@#4450</span></div>
-          </div>
 
           <div className="text-center">
             <Link to="/" className="text-xs text-slate-500 hover:text-slate-300 font-bold transition-colors">
@@ -2320,7 +2327,7 @@ export const Admin: React.FC = () => {
             </div>
             <h2 className="text-2xl font-black text-slate-900 mt-1">Change Admin Username & Password</h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Update your control panel login credentials. Default credentials: Username: <strong className="text-indigo-600">Affordprojpr</strong> | Password: <strong className="text-indigo-600">Affordpro@#4450</strong>
+              Update your control panel login credentials. Once saved, your new credentials take effect immediately and old details will no longer work.
             </p>
           </div>
 
