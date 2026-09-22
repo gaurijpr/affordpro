@@ -55,21 +55,47 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { email, password } = req.body;
-    if (!email || !password) {
-      res.status(400).json({ success: false, message: 'Email and password are required.' });
+    const { email, username, password } = req.body;
+    const loginIdentifier = (username || email || '').trim();
+
+    if (!loginIdentifier || !password) {
+      res.status(400).json({ success: false, message: 'Username/email and password are required.' });
       return;
     }
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    // Search user by email OR name (username)
+    let user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: loginIdentifier },
+          { name: loginIdentifier },
+        ],
+      },
+    });
+
+    // Special fallback for default admin: Affordprojpr / Affordpro@#4450
+    if (!user && (loginIdentifier.toLowerCase() === 'affordprojpr' || loginIdentifier.toLowerCase() === 'affordprojpr@affordpro.shop')) {
+      const defaultHash = await bcrypt.hash('Affordpro@#4450', 10);
+      user = await prisma.user.create({
+        data: {
+          id: 'usr-admin-1',
+          name: 'Affordprojpr',
+          email: 'affordprojpr@affordpro.shop',
+          phone: '+91 99999 88888',
+          passwordHash: defaultHash,
+          role: 'ADMIN',
+        },
+      });
+    }
+
     if (!user) {
-      res.status(401).json({ success: false, message: 'Invalid email or password.' });
+      res.status(401).json({ success: false, message: 'Invalid username/email or password.' });
       return;
     }
 
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
-      res.status(401).json({ success: false, message: 'Invalid email or password.' });
+      res.status(401).json({ success: false, message: 'Invalid username/email or password.' });
       return;
     }
 
@@ -81,6 +107,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         name: user.name,
         email: user.email,
         phone: user.phone || undefined,
+        role: user.role,
         createdAt: user.createdAt.toISOString().split('T')[0],
       },
       token,

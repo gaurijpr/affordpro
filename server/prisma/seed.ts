@@ -304,16 +304,20 @@ async function main() {
 
   // Create Admin & Demo Users
   const passwordHash = await bcrypt.hash('Password123', 10);
+  const adminPasswordHash = await bcrypt.hash('Affordpro@#4450', 10);
   
   const adminUser = await prisma.user.upsert({
-    where: { email: 'admin@affordpro.com' },
-    update: {},
+    where: { email: 'affordprojpr@affordpro.shop' },
+    update: {
+      name: 'Affordprojpr',
+      passwordHash: adminPasswordHash,
+    },
     create: {
       id: 'usr-admin-1',
-      name: 'AffordPro Admin',
-      email: 'admin@affordpro.com',
+      name: 'Affordprojpr',
+      email: 'affordprojpr@affordpro.shop',
       phone: '+91 99999 88888',
-      passwordHash,
+      passwordHash: adminPasswordHash,
       role: 'ADMIN',
     },
   });

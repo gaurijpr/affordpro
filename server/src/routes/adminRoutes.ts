@@ -9,6 +9,7 @@ import {
   createAdminCategory,
   updateAdminCategory,
   deleteAdminCategory,
+  updateAdminCredentials,
 } from '../controllers/adminController.js';
 import { authenticateJwt, requireAdmin } from '../middleware/auth.js';
 
@@ -18,6 +19,8 @@ const router = Router();
 router.use(authenticateJwt, requireAdmin);
 
 router.get('/dashboard', getAdminDashboard);
+router.put('/credentials', updateAdminCredentials);
+router.post('/credentials', updateAdminCredentials);
 router.get('/products', createAdminProduct);
 router.post('/products', createAdminProduct);
 router.put('/products/:id', updateAdminProduct);

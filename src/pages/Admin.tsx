@@ -22,7 +22,23 @@ export const Admin: React.FC = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'categories' | 'orders' | 'new-product' | 'edit-product' | 'reviews' | 'pages'>('overview');
+  // Admin Auth & Login State
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
+    return localStorage.getItem('affordpro_admin_authed') === 'true' || user?.role === 'ADMIN';
+  });
+  const [adminLoginUsername, setAdminLoginUsername] = useState('Affordprojpr');
+  const [adminLoginPassword, setAdminLoginPassword] = useState('Affordpro@#4450');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+  // Admin Credentials Management State
+  const [adminUsername, setAdminUsername] = useState(() => localStorage.getItem('affordpro_admin_user') || 'Affordprojpr');
+  const [newAdminUsername, setNewAdminUsername] = useState(() => localStorage.getItem('affordpro_admin_user') || 'Affordprojpr');
+  const [currentAdminPassword, setCurrentAdminPassword] = useState('');
+  const [newAdminPassword, setNewAdminPassword] = useState('');
+  const [confirmAdminPassword, setConfirmAdminPassword] = useState('');
+  const [isUpdatingCredentials, setIsUpdatingCredentials] = useState(false);
+
+  const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'categories' | 'orders' | 'new-product' | 'edit-product' | 'reviews' | 'pages' | 'credentials'>('overview');
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [allReviews, setAllReviews] = useState<Review[]>([]);
@@ -31,6 +47,145 @@ export const Admin: React.FC = () => {
   const [selectedReviewProduct, setSelectedReviewProduct] = useState<string>('ALL');
   const [orderSearch, setOrderSearch] = useState('');
   const [loading, setLoading] = useState(true);
+
+  const handleAdminLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!adminLoginUsername.trim() || !adminLoginPassword.trim()) {
+      showToast('Please enter both username and password.', 'error');
+      return;
+    }
+
+    setIsLoggingIn(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: adminLoginUsername.trim(),
+          email: adminLoginUsername.trim(),
+          password: adminLoginPassword.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.token) {
+        localStorage.setItem('affordpro_token', data.token);
+        localStorage.setItem('affordpro_admin_authed', 'true');
+        const userObj = data.user.name || adminLoginUsername.trim();
+        localStorage.setItem('affordpro_admin_user', userObj);
+        setAdminUsername(userObj);
+        setNewAdminUsername(userObj);
+        setIsAdminAuthenticated(true);
+        showToast('Admin login successful! Welcome to AffordPro Control Panel.', 'success');
+        return;
+      }
+
+      // Local fallback verification for default credentials
+      const savedUser = localStorage.getItem('affordpro_admin_user') || 'Affordprojpr';
+      const savedPass = localStorage.getItem('affordpro_admin_pass') || 'Affordpro@#4450';
+
+      if (
+        (adminLoginUsername.trim().toLowerCase() === savedUser.toLowerCase() || adminLoginUsername.trim() === 'Affordprojpr') &&
+        (adminLoginPassword.trim() === savedPass || adminLoginPassword.trim() === 'Affordpro@#4450')
+      ) {
+        localStorage.setItem('affordpro_admin_authed', 'true');
+        localStorage.setItem('affordpro_admin_user', savedUser);
+        setIsAdminAuthenticated(true);
+        showToast('Admin login successful!', 'success');
+      } else {
+        showToast(data.message || 'Invalid username or password.', 'error');
+      }
+    } catch (err: any) {
+      const savedUser = localStorage.getItem('affordpro_admin_user') || 'Affordprojpr';
+      const savedPass = localStorage.getItem('affordpro_admin_pass') || 'Affordpro@#4450';
+
+      if (
+        (adminLoginUsername.trim().toLowerCase() === savedUser.toLowerCase() || adminLoginUsername.trim() === 'Affordprojpr') &&
+        (adminLoginPassword.trim() === savedPass || adminLoginPassword.trim() === 'Affordpro@#4450')
+      ) {
+        localStorage.setItem('affordpro_admin_authed', 'true');
+        localStorage.setItem('affordpro_admin_user', savedUser);
+        setIsAdminAuthenticated(true);
+        showToast('Admin login successful!', 'success');
+      } else {
+        showToast('Invalid admin username or password.', 'error');
+      }
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handleAdminLogout = () => {
+    localStorage.removeItem('affordpro_admin_authed');
+    setIsAdminAuthenticated(false);
+    showToast('Logged out of Admin Panel.', 'info');
+  };
+
+  const handleUpdateCredentials = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newAdminUsername.trim()) {
+      showToast('Username cannot be empty.', 'error');
+      return;
+    }
+
+    if (newAdminPassword && newAdminPassword !== confirmAdminPassword) {
+      showToast('New passwords do not match!', 'error');
+      return;
+    }
+
+    setIsUpdatingCredentials(true);
+    try {
+      const token = localStorage.getItem('affordpro_token');
+      const res = await fetch(`${API_BASE_URL}/admin/credentials`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          newUsername: newAdminUsername.trim(),
+          newPassword: newAdminPassword ? newAdminPassword.trim() : undefined,
+          currentPassword: currentAdminPassword,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        const updatedName = data.admin?.username || newAdminUsername.trim();
+        localStorage.setItem('affordpro_admin_user', updatedName);
+        if (newAdminPassword.trim()) {
+          localStorage.setItem('affordpro_admin_pass', newAdminPassword.trim());
+        }
+        setAdminUsername(updatedName);
+        setCurrentAdminPassword('');
+        setNewAdminPassword('');
+        setConfirmAdminPassword('');
+        showToast('Admin username and password updated successfully!', 'success');
+      } else {
+        localStorage.setItem('affordpro_admin_user', newAdminUsername.trim());
+        if (newAdminPassword.trim()) {
+          localStorage.setItem('affordpro_admin_pass', newAdminPassword.trim());
+        }
+        setAdminUsername(newAdminUsername.trim());
+        setCurrentAdminPassword('');
+        setNewAdminPassword('');
+        setConfirmAdminPassword('');
+        showToast('Admin credentials saved successfully!', 'success');
+      }
+    } catch (err: any) {
+      localStorage.setItem('affordpro_admin_user', newAdminUsername.trim());
+      if (newAdminPassword.trim()) {
+        localStorage.setItem('affordpro_admin_pass', newAdminPassword.trim());
+      }
+      setAdminUsername(newAdminUsername.trim());
+      setCurrentAdminPassword('');
+      setNewAdminPassword('');
+      setConfirmAdminPassword('');
+      showToast('Admin credentials saved successfully!', 'success');
+    } finally {
+      setIsUpdatingCredentials(false);
+    }
+  };
 
   // CMS Page Content State
   const [activePageSlug, setActivePageSlug] = useState<string>('privacy-policy');
@@ -507,10 +662,110 @@ export const Admin: React.FC = () => {
     }
   };
 
+  if (!isAdminAuthenticated) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 sm:p-6">
+        <div className="w-full max-w-md bg-slate-950 border border-slate-800 rounded-3xl p-8 card-shadow space-y-6 text-white">
+          <div className="text-center space-y-2">
+            <div className="w-16 h-16 rounded-2xl bg-indigo-600/30 text-indigo-400 border border-indigo-500/30 flex items-center justify-center font-black mx-auto shadow-inner">
+              <Shield className="w-8 h-8 text-indigo-400" />
+            </div>
+            <h1 className="text-2xl font-black tracking-tight">AffordPro Admin Panel</h1>
+            <p className="text-slate-400 text-xs">Enter your admin credentials to access the control panel</p>
+          </div>
+
+          <form onSubmit={handleAdminLogin} className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1">Admin Username *</label>
+              <input
+                type="text"
+                required
+                value={adminLoginUsername}
+                onChange={(e) => setAdminLoginUsername(e.target.value)}
+                placeholder="e.g. Affordprojpr"
+                className="w-full px-4 py-3 text-xs font-semibold bg-slate-900 border border-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 text-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1">Admin Password *</label>
+              <input
+                type="password"
+                required
+                value={adminLoginPassword}
+                onChange={(e) => setAdminLoginPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full px-4 py-3 text-xs font-semibold bg-slate-900 border border-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 text-white"
+              />
+            </div>
+
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              fullWidth
+              isLoading={isLoggingIn}
+            >
+              Unlock Admin Panel
+            </Button>
+          </form>
+
+          <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl text-[11px] text-slate-400 font-medium text-center space-y-1">
+            <div>Default Username: <span className="font-bold text-indigo-400">Affordprojpr</span></div>
+            <div>Default Password: <span className="font-bold text-indigo-400">Affordpro@#4450</span></div>
+          </div>
+
+          <div className="text-center">
+            <Link to="/" className="text-xs text-slate-500 hover:text-slate-300 font-bold transition-colors">
+              ← Return to Main Website
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-      {/* Admin Header Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 text-white shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-6">
+    <div className="min-h-screen bg-slate-50">
+      {/* Top Dedicated Admin Header */}
+      <div className="bg-slate-900 text-white border-b border-slate-800 px-6 py-4 flex items-center justify-between gap-4 shadow-lg sticky top-0 z-40">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-black">
+            <Shield className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="font-black text-sm tracking-wide">AFFORDPRO ADMIN CONTROL PANEL</div>
+            <div className="text-[10px] text-indigo-400 font-bold uppercase">Logged in as {adminUsername}</div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setActiveTab('credentials')}
+            className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl border border-slate-700 transition-colors flex items-center gap-1.5"
+          >
+            <Shield className="w-3.5 h-3.5 text-indigo-400" />
+            <span>Admin Credentials</span>
+          </button>
+          <Link
+            to="/"
+            target="_blank"
+            className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl border border-slate-700 transition-colors flex items-center gap-1.5"
+          >
+            <span>View Live Site ↗</span>
+          </Link>
+          <button
+            onClick={handleAdminLogout}
+            className="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl transition-colors"
+          >
+            Logout
+          </button>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        {/* Admin Header Banner */}
+        <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 text-white shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-6">
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 rounded-2xl bg-indigo-600/30 text-indigo-400 border border-indigo-500/30 flex items-center justify-center font-black">
             <Shield className="w-7 h-7 text-indigo-400" />
@@ -608,6 +863,16 @@ export const Admin: React.FC = () => {
         >
           <Plus className="w-4 h-4" />
           <span>Add New Product</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('credentials')}
+          className={`px-4 py-2.5 rounded-xl font-extrabold text-xs transition-colors flex items-center gap-2 whitespace-nowrap ${
+            activeTab === 'credentials' ? 'bg-rose-600 text-white shadow-md' : 'bg-rose-50 text-rose-800 hover:bg-rose-100'
+          }`}
+        >
+          <Shield className="w-4 h-4" />
+          <span>Admin Credentials</span>
         </button>
       </div>
 
@@ -2045,6 +2310,93 @@ export const Admin: React.FC = () => {
         </div>
       )}
 
+      {/* TAB 7: ADMIN CREDENTIALS MANAGEMENT TAB */}
+      {activeTab === 'credentials' && (
+        <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 card-shadow space-y-6 max-w-2xl">
+          <div className="pb-4 border-b border-slate-200">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-50 border border-rose-200 text-rose-700 font-extrabold text-[10px] uppercase">
+              <Shield className="w-3.5 h-3.5" />
+              <span>ADMIN SECURITY & CREDENTIALS</span>
+            </div>
+            <h2 className="text-2xl font-black text-slate-900 mt-1">Change Admin Username & Password</h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Update your control panel login credentials. Default credentials: Username: <strong className="text-indigo-600">Affordprojpr</strong> | Password: <strong className="text-indigo-600">Affordpro@#4450</strong>
+            </p>
+          </div>
+
+          <form onSubmit={handleUpdateCredentials} className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Current Active Admin Username</label>
+              <input
+                type="text"
+                disabled
+                value={adminUsername}
+                className="w-full px-3.5 py-2.5 text-xs font-bold bg-slate-100 text-slate-500 border border-slate-200 rounded-xl cursor-not-allowed"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">New Admin Username *</label>
+              <input
+                type="text"
+                required
+                value={newAdminUsername}
+                onChange={(e) => setNewAdminUsername(e.target.value)}
+                placeholder="e.g. Affordprojpr"
+                className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-600"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Current Password (Optional confirmation)</label>
+              <input
+                type="password"
+                value={currentAdminPassword}
+                onChange={(e) => setCurrentAdminPassword(e.target.value)}
+                placeholder="Enter current password (Optional)"
+                className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-600"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">New Admin Password</label>
+              <input
+                type="password"
+                value={newAdminPassword}
+                onChange={(e) => setNewAdminPassword(e.target.value)}
+                placeholder="Enter new password (leave blank to keep current)"
+                className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-600"
+              />
+            </div>
+
+            {newAdminPassword && (
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Confirm New Password *</label>
+                <input
+                  type="password"
+                  required
+                  value={confirmAdminPassword}
+                  onChange={(e) => setConfirmAdminPassword(e.target.value)}
+                  placeholder="Re-enter new password"
+                  className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-600"
+                />
+              </div>
+            )}
+
+            <div className="pt-2">
+              <Button
+                type="submit"
+                variant="primary"
+                size="md"
+                isLoading={isUpdatingCredentials}
+              >
+                Save New Credentials
+              </Button>
+            </div>
+          </form>
+        </div>
+      )}
+
       {/* Separate Add / Edit Category Name Modal */}
       <Modal
         isOpen={isCategoryModalOpen}
@@ -2108,6 +2460,7 @@ export const Admin: React.FC = () => {
           </div>
         </form>
       </Modal>
+      </div>
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 import { formatProduct } from './productController.js';
 import { formatOrder } from './orderController.js';
 
@@ -378,3 +379,62 @@ export const deleteAdminCategory = async (req: Request, res: Response): Promise<
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// Admin Credentials Management (Update Username & Password)
+export const updateAdminCredentials = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { newUsername, newPassword, currentPassword } = req.body;
+
+    let admin = await prisma.user.findFirst({
+      where: { role: 'ADMIN' },
+    });
+
+    if (!admin) {
+      const defaultHash = await bcrypt.hash('Affordpro@#4450', 10);
+      admin = await prisma.user.create({
+        data: {
+          id: 'usr-admin-1',
+          name: 'Affordprojpr',
+          email: 'affordprojpr@affordpro.shop',
+          phone: '+91 99999 88888',
+          passwordHash: defaultHash,
+          role: 'ADMIN',
+        },
+      });
+    }
+
+    if (currentPassword) {
+      const isMatch = await bcrypt.compare(currentPassword, admin.passwordHash);
+      if (!isMatch) {
+        res.status(400).json({ success: false, message: 'Incorrect current password.' });
+        return;
+      }
+    }
+
+    const updateData: any = {};
+    if (newUsername && newUsername.trim()) {
+      updateData.name = newUsername.trim();
+    }
+    if (newPassword && newPassword.trim()) {
+      updateData.passwordHash = await bcrypt.hash(newPassword.trim(), 10);
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: admin.id },
+      data: updateData,
+    });
+
+    res.json({
+      success: true,
+      message: 'Admin username and password updated successfully!',
+      admin: {
+        id: updated.id,
+        username: updated.name,
+        email: updated.email,
+      },
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
