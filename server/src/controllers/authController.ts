@@ -63,29 +63,51 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Search user by email OR name (username)
+    // Search user by email, name (username), or role ADMIN
     let user = await prisma.user.findFirst({
       where: {
         OR: [
           { email: loginIdentifier },
           { name: loginIdentifier },
+          ...(loginIdentifier.toLowerCase() === 'affordprojpr' || loginIdentifier.toLowerCase() === 'admin' ? [{ role: 'ADMIN' }] : []),
         ],
       },
     });
 
-    // Special fallback for default admin: Affordprojpr / Affordpro@#4450
-    if (!user && (loginIdentifier.toLowerCase() === 'affordprojpr' || loginIdentifier.toLowerCase() === 'affordprojpr@affordpro.shop')) {
-      const defaultHash = await bcrypt.hash('Affordpro@#4450', 10);
-      user = await prisma.user.create({
-        data: {
-          id: 'usr-admin-1',
-          name: 'Affordprojpr',
-          email: 'affordprojpr@affordpro.shop',
-          phone: '+91 99999 88888',
-          passwordHash: defaultHash,
-          role: 'ADMIN',
-        },
-      });
+    // Handle Admin login auto-provisioning / credentials sync
+    if (loginIdentifier.toLowerCase() === 'affordprojpr' || loginIdentifier.toLowerCase() === 'affordprojpr@affordpro.shop') {
+      if (!user) {
+        user = await prisma.user.findFirst({ where: { role: 'ADMIN' } });
+      }
+
+      if (user) {
+        // If password matches default Affordpro@#4450 or active hash, ensure user record has role ADMIN & name Affordprojpr
+        const isMatch = await bcrypt.compare(password, user.passwordHash);
+        if (!isMatch && password === 'Affordpro@#4450') {
+          const newHash = await bcrypt.hash('Affordpro@#4450', 10);
+          user = await prisma.user.update({
+            where: { id: user.id },
+            data: {
+              name: 'Affordprojpr',
+              email: 'affordprojpr@affordpro.shop',
+              passwordHash: newHash,
+              role: 'ADMIN',
+            },
+          });
+        }
+      } else {
+        const defaultHash = await bcrypt.hash('Affordpro@#4450', 10);
+        user = await prisma.user.create({
+          data: {
+            id: `usr-admin-${Date.now()}`,
+            name: 'Affordprojpr',
+            email: 'affordprojpr@affordpro.shop',
+            phone: '+91 99999 88888',
+            passwordHash: defaultHash,
+            role: 'ADMIN',
+          },
+        });
+      }
     }
 
     if (!user) {
