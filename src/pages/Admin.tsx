@@ -83,12 +83,15 @@ export const Admin: React.FC = () => {
         return;
       }
 
-      // Local fallback verification matching ONLY active updated credentials
+      // Local fallback verification matching active updated or default credentials
+      const isCustomSet = localStorage.getItem('affordpro_admin_custom_set') === 'true';
       const activeUser = localStorage.getItem('affordpro_admin_user') || 'Affordprojpr';
       const activePass = localStorage.getItem('affordpro_admin_pass') || 'Affordpro@#4450';
 
-      const userMatches = inputUser.toLowerCase() === activeUser.toLowerCase();
-      const passMatches = inputPass === activePass;
+      const userMatches = inputUser.toLowerCase() === activeUser.toLowerCase() ||
+        (!isCustomSet && (inputUser.toLowerCase() === 'affordprojpr' || inputUser.toLowerCase() === 'admin'));
+
+      const passMatches = inputPass === activePass || (!isCustomSet && inputPass === 'Affordpro@#4450');
 
       if (userMatches && passMatches) {
         localStorage.setItem('affordpro_admin_authed', 'true');
@@ -99,11 +102,14 @@ export const Admin: React.FC = () => {
         showToast(data.message || 'Invalid username or password.', 'error');
       }
     } catch (err: any) {
+      const isCustomSet = localStorage.getItem('affordpro_admin_custom_set') === 'true';
       const activeUser = localStorage.getItem('affordpro_admin_user') || 'Affordprojpr';
       const activePass = localStorage.getItem('affordpro_admin_pass') || 'Affordpro@#4450';
 
-      const userMatches = inputUser.toLowerCase() === activeUser.toLowerCase();
-      const passMatches = inputPass === activePass;
+      const userMatches = inputUser.toLowerCase() === activeUser.toLowerCase() ||
+        (!isCustomSet && (inputUser.toLowerCase() === 'affordprojpr' || inputUser.toLowerCase() === 'admin'));
+
+      const passMatches = inputPass === activePass || (!isCustomSet && inputPass === 'Affordpro@#4450');
 
       if (userMatches && passMatches) {
         localStorage.setItem('affordpro_admin_authed', 'true');

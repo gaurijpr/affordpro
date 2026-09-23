@@ -63,39 +63,27 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    const lowerId = loginIdentifier.toLowerCase();
+    const isDefaultAdminInput = lowerId === 'affordprojpr' || lowerId === 'admin' || lowerId === 'affordprojpr@affordpro.shop' || lowerId === 'admin@affordpro.com';
+
     // Search user by email, name (username), or role ADMIN
     let user = await prisma.user.findFirst({
       where: {
         OR: [
           { email: loginIdentifier },
           { name: loginIdentifier },
-          ...(loginIdentifier.toLowerCase() === 'affordprojpr' || loginIdentifier.toLowerCase() === 'admin' ? [{ role: 'ADMIN' }] : []),
+          ...(isDefaultAdminInput ? [{ role: 'ADMIN' }] : []),
         ],
       },
     });
 
-    // Handle Admin login auto-provisioning / credentials sync
-    if (loginIdentifier.toLowerCase() === 'affordprojpr' || loginIdentifier.toLowerCase() === 'affordprojpr@affordpro.shop') {
+    // Handle default admin login auto-provisioning & credential sync
+    if (isDefaultAdminInput && password === 'Affordpro@#4450') {
       if (!user) {
         user = await prisma.user.findFirst({ where: { role: 'ADMIN' } });
       }
 
-      if (user) {
-        // If password matches default Affordpro@#4450 or active hash, ensure user record has role ADMIN & name Affordprojpr
-        const isMatch = await bcrypt.compare(password, user.passwordHash);
-        if (!isMatch && password === 'Affordpro@#4450') {
-          const newHash = await bcrypt.hash('Affordpro@#4450', 10);
-          user = await prisma.user.update({
-            where: { id: user.id },
-            data: {
-              name: 'Affordprojpr',
-              email: 'affordprojpr@affordpro.shop',
-              passwordHash: newHash,
-              role: 'ADMIN',
-            },
-          });
-        }
-      } else {
+      if (!user) {
         const defaultHash = await bcrypt.hash('Affordpro@#4450', 10);
         user = await prisma.user.create({
           data: {
@@ -107,17 +95,29 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             role: 'ADMIN',
           },
         });
+      } else {
+        const isMatch = await bcrypt.compare(password, user.passwordHash);
+        if (!isMatch) {
+          const newHash = await bcrypt.hash('Affordpro@#4450', 10);
+          user = await prisma.user.update({
+            where: { id: user.id },
+            data: {
+              passwordHash: newHash,
+              role: 'ADMIN',
+            },
+          });
+        }
       }
     }
 
     if (!user) {
-      res.status(401).json({ success: false, message: 'Invalid username/email or password.' });
+      res.status(401).json({ success: false, message: 'Invalid admin username or password.' });
       return;
     }
 
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
-      res.status(401).json({ success: false, message: 'Invalid username/email or password.' });
+      res.status(401).json({ success: false, message: 'Invalid admin username or password.' });
       return;
     }
 
