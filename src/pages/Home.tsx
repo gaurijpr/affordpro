@@ -279,77 +279,128 @@ export const Home: React.FC = () => {
               </div>
             </div>
 
-            {/* Right Sky Rocket Launch Animation */}
-            <div className="lg:col-span-5 relative flex flex-col items-center justify-center min-h-[420px] py-4">
-              <div className="absolute top-2 left-6 text-amber-400 animate-star-1">
-                <Sparkles className="w-5 h-5 fill-amber-400/30" />
-              </div>
-              <div className="absolute top-10 right-4 text-indigo-400 animate-star-2">
-                <Sparkles className="w-6 h-6 fill-indigo-400/30" />
-              </div>
-              <div className="absolute bottom-16 left-2 text-purple-400 animate-star-3">
-                <Sparkles className="w-4 h-4 fill-purple-400/30" />
-              </div>
+            {/* Right Side: Interactive 3D Digital Marketplace Studio & Orbiting Resource Cards */}
+            <div className="lg:col-span-5 relative flex flex-col items-center justify-center min-h-[440px] py-6 select-none">
+              
+              {/* Ambient Background Glow Lights */}
+              <div className="absolute w-72 h-72 bg-indigo-500/20 rounded-full blur-3xl animate-pulse-glow pointer-events-none" />
+              <div className="absolute w-60 h-60 bg-purple-500/15 rounded-full blur-2xl -bottom-4 right-2 pointer-events-none" />
 
-              <div className="relative flex flex-col items-center select-none">
-                <div
-                  onClick={handleRocketClick}
-                  className={`relative z-20 cursor-pointer group transition-transform ${
-                    isLaunching ? 'animate-rocket-air-release z-50' : 'hover:scale-105 active:scale-95'
-                  }`}
-                  title="Click to Launch Rocket to Sky! 🚀"
-                >
-                  <svg className="w-60 h-60 sm:w-72 sm:h-72 lg:w-80 lg:h-80 filter drop-shadow-2xl" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M100 20C100 20 135 60 135 120C135 135 125 145 100 145C75 145 65 135 65 120C65 60 100 20 100 20Z" fill="url(#rocketBodyGrad)" />
-                    <path d="M100 20C100 20 120 45 125 70H75C80 45 100 20 100 20Z" fill="url(#rocketNoseGrad)" />
-                    <path d="M65 110L40 140C38 142 42 150 50 148L67 138" fill="#4F46E5" />
-                    <path d="M135 110L160 140C162 142 158 150 150 148L133 138" fill="#4F46E5" />
-                    <circle cx="100" cy="85" r="16" fill="#0F172A" stroke="#E2E8F0" strokeWidth="4" />
-                    <circle cx="100" cy="85" r="10" fill="#38BDF8" />
-                    <circle cx="97" cy="82" r="3" fill="white" opacity="0.8" />
-                    <path d="M85 145H115L110 155H90L85 145Z" fill="#1E293B" />
-                    <defs>
-                      <linearGradient id="rocketBodyGrad" x1="65" y1="20" x2="135" y2="145" gradientUnits="userSpaceOnUse">
-                        <stop stopColor="#6366F1" />
-                        <stop offset="0.5" stopColor="#4F46E5" />
-                        <stop offset="1" stopColor="#3730A3" />
-                      </linearGradient>
-                      <linearGradient id="rocketNoseGrad" x1="75" y1="20" x2="125" y2="70" gradientUnits="userSpaceOnUse">
-                        <stop stopColor="#EC4899" />
-                        <stop offset="1" stopColor="#8B5CF6" />
-                      </linearGradient>
-                    </defs>
-                  </svg>
-
-                  {isLaunching && (
-                    <div className="absolute -bottom-14 left-1/2 -translate-x-1/2 flex flex-col items-center animate-flame z-10 pointer-events-none">
-                      <div className="w-16 h-28 bg-gradient-to-b from-yellow-300 via-orange-500 to-rose-600 rounded-b-full shadow-[0_0_50px_rgba(249,115,22,0.9)] animate-pulse" />
-                      <div className="absolute top-0 w-8 h-18 bg-gradient-to-b from-cyan-200 via-white to-amber-300 rounded-b-full shadow-[0_0_30px_rgba(255,255,255,1)]" />
-                      <div className="absolute top-2 w-4 h-10 bg-white rounded-b-full shadow-[0_0_20px_rgba(255,255,255,1)]" />
-                    </div>
-                  )}
-                </div>
-
-                <div className="mt-4 flex flex-col items-center z-10 relative">
-                  {isLaunching && (
-                    <div className="absolute -top-20 inset-x-0 flex items-center justify-center animate-high-smoke pointer-events-none z-0">
-                      <div className="w-96 h-36 bg-gradient-to-r from-slate-200/95 via-indigo-100/95 to-slate-200/95 rounded-full blur-md shadow-2xl" />
-                      <div className="absolute -top-12 -left-4 w-44 h-44 bg-white/95 rounded-full blur-md" />
-                      <div className="absolute -top-14 -right-4 w-48 h-48 bg-indigo-100/90 rounded-full blur-md" />
-                      <div className="absolute -top-6 w-60 h-32 bg-gradient-to-t from-amber-400/40 via-white/90 to-indigo-50/90 rounded-full blur-md" />
-                    </div>
-                  )}
-
-                  <div className="px-6 py-3 bg-white/95 backdrop-blur-md border-2 border-emerald-400 rounded-full shadow-xl flex items-center gap-2.5 text-slate-900 z-10 transition-transform transform group-hover:scale-105">
-                    <div className="p-1.5 rounded-full bg-emerald-500 text-white shadow-md">
-                      <ShieldCheck className="w-4 h-4" />
-                    </div>
-                    <span className="font-black text-xs sm:text-sm tracking-tight text-slate-900 whitespace-nowrap">
-                      Trust is our first policy
-                    </span>
+              {/* Orbiting Card 1 (Top Left - Canva & Reels Bundle) */}
+              <div className="absolute -top-4 -left-4 sm:top-2 sm:-left-6 z-20 animate-float-slow">
+                <div className="p-3 bg-white/95 backdrop-blur-md border border-indigo-100 rounded-2xl shadow-xl shadow-indigo-500/10 flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-md">
+                    <Video className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-slate-900 text-xs">Viral Reels & Canva</h4>
+                    <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">1080p HD Ready</span>
                   </div>
                 </div>
               </div>
+
+              {/* Orbiting Card 2 (Top Right - Online Courses) */}
+              <div className="absolute -top-6 -right-4 sm:top-0 sm:-right-4 z-20 animate-float-delayed">
+                <div className="p-3 bg-white/95 backdrop-blur-md border border-amber-100 rounded-2xl shadow-xl shadow-amber-500/10 flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-md">
+                    <GraduationCap className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-slate-900 text-xs">Digital Masterclass</h4>
+                    <div className="flex items-center gap-1 text-[10px] text-slate-500 font-bold">
+                      <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                      <span>4.9 (Self-Paced)</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Orbiting Card 3 (Bottom Left - Instant Download E-Books) */}
+              <div className="absolute -bottom-4 -left-4 sm:bottom-6 sm:-left-6 z-20 animate-float-reverse">
+                <div className="p-3 bg-white/95 backdrop-blur-md border border-emerald-100 rounded-2xl shadow-xl shadow-emerald-500/10 flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md">
+                    <Download className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-slate-900 text-xs">Instant Download</h4>
+                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Royalty Free</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Orbiting Card 4 (Bottom Right - Done-For-You Services) */}
+              <div className="absolute -bottom-6 -right-4 sm:bottom-4 sm:-right-4 z-20 animate-float-slow">
+                <div className="p-3 bg-white/95 backdrop-blur-md border border-sky-100 rounded-2xl shadow-xl shadow-sky-500/10 flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 text-white shadow-md">
+                    <Briefcase className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-slate-900 text-xs">Custom Services</h4>
+                    <span className="text-[10px] font-bold text-sky-600 bg-sky-50 px-2 py-0.5 rounded-full">2-3 Day Delivery</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Central Digital Product Studio Tablet / Workspace Hub Container */}
+              <div
+                onClick={handleRocketClick}
+                className="relative z-10 w-full max-w-sm bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 p-5 rounded-3xl border-2 border-indigo-500/30 shadow-2xl hover:border-indigo-400 transition-all cursor-pointer group"
+                title="Click to interact with AffordPro Digital Hub ✨"
+              >
+                {/* Header bar of Central Studio */}
+                <div className="flex items-center justify-between pb-3 border-b border-indigo-900/60 mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-rose-500" />
+                    <div className="w-3 h-3 rounded-full bg-amber-500" />
+                    <div className="w-3 h-3 rounded-full bg-emerald-500" />
+                  </div>
+                  <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-[10px] font-extrabold">
+                    <Sparkles className="w-3 h-3 text-indigo-400 animate-spin" style={{ animationDuration: '6s' }} />
+                    <span>AFFORDPRO HUB ACTIVE</span>
+                  </div>
+                </div>
+
+                {/* Main Card Content Viewport */}
+                <div className="relative aspect-video w-full rounded-2xl bg-slate-950 border border-indigo-900/80 overflow-hidden flex flex-col items-center justify-center p-4 text-center group-hover:scale-[1.02] transition-transform">
+                  
+                  {/* Subtle Shimmer Beam */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-indigo-400/10 to-transparent -translate-x-full animate-shimmer-beam pointer-events-none" />
+
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 text-white flex items-center justify-center shadow-lg shadow-indigo-500/40 mb-3 group-hover:rotate-6 transition-transform">
+                    <Layout className="w-7 h-7" />
+                  </div>
+
+                  <h3 className="font-black text-white text-sm tracking-tight mb-1">
+                    Digital Creation Studio
+                  </h3>
+                  <p className="text-[11px] text-slate-400 max-w-[200px] leading-snug">
+                    Templates, Courses, Reels & Custom Services
+                  </p>
+
+                  <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/20 border border-emerald-500/40 rounded-full text-emerald-400 text-[10px] font-bold">
+                    <CheckCircle className="w-3 h-3" />
+                    <span>Instant Access Ready</span>
+                  </div>
+                </div>
+
+                {/* Pulse wave when user clicks */}
+                {isLaunching && (
+                  <div className="absolute inset-0 rounded-3xl border-2 border-indigo-400 animate-ping pointer-events-none" />
+                )}
+              </div>
+
+              {/* Trust Badge Below Central Hub */}
+              <div className="mt-6 flex flex-col items-center z-10 relative">
+                <div className="px-6 py-2.5 bg-white/95 backdrop-blur-md border-2 border-emerald-400 rounded-full shadow-xl flex items-center gap-2.5 text-slate-900 transition-transform hover:scale-105">
+                  <div className="p-1 rounded-full bg-emerald-500 text-white shadow-md">
+                    <ShieldCheck className="w-4 h-4" />
+                  </div>
+                  <span className="font-black text-xs sm:text-sm tracking-tight text-slate-900 whitespace-nowrap">
+                    Trust is our first policy
+                  </span>
+                </div>
+              </div>
+
             </div>
           </div>
         </div>
