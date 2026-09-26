@@ -37,20 +37,20 @@ export const Footer: React.FC = () => {
             </div>
           </div>
 
-          {/* Products Column */}
+          {/* Explore Column */}
           <div>
             <h4 className="font-bold text-white text-sm uppercase tracking-wider mb-4">
-              Products
+              Explore
             </h4>
             <ul className="space-y-2.5 text-xs font-semibold">
               <li>
-                <Link to="/products?category=reels-bundles" className="hover:text-white transition-colors">
-                  Reels Bundles
+                <Link to="/products" className="hover:text-white transition-colors">
+                  All Products
                 </Link>
               </li>
               <li>
-                <Link to="/products?category=canva-templates" className="hover:text-white transition-colors">
-                  Canva Templates
+                <Link to="/categories" className="hover:text-white transition-colors">
+                  Product Categories
                 </Link>
               </li>
               <li>
@@ -59,19 +59,19 @@ export const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/products?category=digital-products" className="hover:text-white transition-colors">
-                  Digital Products & E-books
+                <Link to="/products?type=SERVICE" className="hover:text-white transition-colors">
+                  Done-For-You Services
                 </Link>
               </li>
               <li>
-                <Link to="/products?type=SERVICE" className="hover:text-white transition-colors">
-                  Done-For-You Services
+                <Link to="/products?category=canva-templates" className="hover:text-white transition-colors">
+                  Canva Templates
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Company & Support Column */}
+          {/* Company Column */}
           <div>
             <h4 className="font-bold text-white text-sm uppercase tracking-wider mb-4">
               Company
@@ -92,9 +92,28 @@ export const Footer: React.FC = () => {
                   FAQ & Knowledge Base
                 </Link>
               </li>
+            </ul>
+          </div>
+
+          {/* Support Column */}
+          <div>
+            <h4 className="font-bold text-white text-sm uppercase tracking-wider mb-4">
+              Support
+            </h4>
+            <ul className="space-y-2.5 text-xs font-semibold">
+              <li>
+                <Link to="/faq" className="hover:text-white transition-colors">
+                  Help Center
+                </Link>
+              </li>
               <li>
                 <Link to="/account" className="hover:text-white transition-colors">
-                  My Dashboard
+                  My Orders
+                </Link>
+              </li>
+              <li>
+                <Link to="/account" className="hover:text-white transition-colors">
+                  Account Dashboard
                 </Link>
               </li>
             </ul>
@@ -103,7 +122,7 @@ export const Footer: React.FC = () => {
           {/* Legal Column */}
           <div>
             <h4 className="font-bold text-white text-sm uppercase tracking-wider mb-4">
-              Legal Policies
+              Legal
             </h4>
             <ul className="space-y-2.5 text-xs font-semibold">
               <li>
