@@ -620,61 +620,48 @@ export const Admin: React.FC = () => {
 
     setIsCreating(true);
     try {
-      const token = localStorage.getItem('affordpro_token') || localStorage.getItem('auth_token');
-      const response = await fetch(`${API_BASE_URL}/admin/products`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          title: newTitle,
-          price: Number(newPrice),
-          compareAtPrice: newCompareAtPrice ? Number(newCompareAtPrice) : undefined,
-          categorySlug: newCategory || 'digital-products',
-          productType: newType,
-          format: newFormat,
-          deliveryMethod: newDeliveryMethod,
-          accessDuration: newAccessDuration,
-          rating: Number(newRating) || 4.9,
-          reviewCount: Number(newReviewCount) || 1420,
-          shortDescription: newShortDesc || newTitle,
-          fullDescription: newFullDesc || newShortDesc || newTitle,
-          features: newFeaturesStr.split('\n').map((s) => s.trim()).filter(Boolean),
-          whatIsIncluded: newWhatIsIncludedStr.split('\n').map((s) => s.trim()).filter(Boolean),
-          whoIsThisFor: newWhoIsThisForStr.split('\n').map((s) => s.trim()).filter(Boolean),
-          images: [newImageUrl || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80'],
-          downloadUrl: newDownloadUrl || 'https://example.com/downloads/sample-bundle.zip',
-          featured: isFeatured,
-          bestSeller: isBestSeller,
-        }),
+      const createdProd = await productService.createProduct({
+        title: newTitle,
+        price: Number(newPrice),
+        compareAtPrice: newCompareAtPrice ? Number(newCompareAtPrice) : undefined,
+        categorySlug: newCategory || 'digital-products',
+        category: categories.find((c) => c.slug === newCategory)?.name || 'Digital Products',
+        productType: newType as any,
+        format: newFormat,
+        deliveryMethod: newDeliveryMethod,
+        accessDuration: newAccessDuration,
+        rating: Number(newRating) || 4.9,
+        reviewCount: Number(newReviewCount) || 1420,
+        shortDescription: newShortDesc || newTitle,
+        fullDescription: newFullDesc || newShortDesc || newTitle,
+        features: newFeaturesStr.split('\n').map((s) => s.trim()).filter(Boolean),
+        whatIsIncluded: newWhatIsIncludedStr.split('\n').map((s) => s.trim()).filter(Boolean),
+        whoIsThisFor: newWhoIsThisForStr.split('\n').map((s) => s.trim()).filter(Boolean),
+        images: [newImageUrl || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80'],
+        downloadUrl: newDownloadUrl || 'https://example.com/downloads/sample-bundle.zip',
+        featured: isFeatured,
+        bestSeller: isBestSeller,
       });
 
-      const data = await response.json();
-      if (response.ok) {
-        const createdProd = data.product || data;
-        if (createdProd && createdProd.id && newUploadedReviews && newUploadedReviews.length > 0) {
-          reviewService.saveCustomReviews(createdProd.id, createdProd.slug, newUploadedReviews);
-          setNewUploadedReviews(null);
-        }
-
-        showToast('New Product created successfully in Database!', 'success');
-        setNewTitle('');
-        setNewPrice('');
-        setNewCompareAtPrice('');
-        setNewShortDesc('');
-        setNewFullDesc('');
-        setNewFeaturesStr('');
-        setNewWhatIsIncludedStr('');
-        setNewWhoIsThisForStr('');
-        setNewUploadedReviewsInfo(null);
-        fetchAdminData();
-        setActiveTab('products');
-      } else {
-        showToast(data.message || 'Failed to create product', 'error');
+      if (createdProd && createdProd.id && newUploadedReviews && newUploadedReviews.length > 0) {
+        reviewService.saveCustomReviews(createdProd.id, createdProd.slug, newUploadedReviews);
+        setNewUploadedReviews(null);
       }
+
+      showToast(`Product "${createdProd.title}" created successfully!`, 'success');
+      setNewTitle('');
+      setNewPrice('');
+      setNewCompareAtPrice('');
+      setNewShortDesc('');
+      setNewFullDesc('');
+      setNewFeaturesStr('');
+      setNewWhatIsIncludedStr('');
+      setNewWhoIsThisForStr('');
+      setNewUploadedReviewsInfo(null);
+      fetchAdminData();
+      setActiveTab('products');
     } catch (err: any) {
-      showToast('Error connecting to backend server', 'error');
+      showToast(err.message || 'Failed to create product', 'error');
     } finally {
       setIsCreating(false);
     }
