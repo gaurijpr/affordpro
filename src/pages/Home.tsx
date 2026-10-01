@@ -328,10 +328,15 @@ export const Home: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {loading ? (
             <SkeletonLoader variant="card" count={4} />
-          ) : (
+          ) : bestSellers.length > 0 ? (
             bestSellers.map((prod) => (
               <ProductCard key={prod.id} product={prod} />
             ))
+          ) : (
+            <div className="col-span-full py-10 text-center bg-slate-50 border border-dashed border-slate-200 rounded-2xl">
+              <p className="text-sm font-bold text-slate-500">No Best Selling products added yet.</p>
+              <p className="text-xs text-slate-400 mt-1">Upload products from the Admin Panel to display them here.</p>
+            </div>
           )}
         </div>
       </section>
@@ -369,10 +374,15 @@ export const Home: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {loading ? (
               <SkeletonLoader variant="card" count={3} />
-            ) : (
+            ) : services.length > 0 ? (
               services.map((service) => (
                 <ServiceCard key={service.id} service={service} />
               ))
+            ) : (
+              <div className="col-span-full py-10 text-center bg-slate-900/60 border border-dashed border-slate-800 rounded-2xl">
+                <p className="text-sm font-bold text-slate-400">No Custom Services added yet.</p>
+                <p className="text-xs text-slate-500 mt-1">Upload service listings from the Admin Panel to display them here.</p>
+              </div>
             )}
           </div>
         </div>
@@ -394,10 +404,15 @@ export const Home: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {loading ? (
             <SkeletonLoader variant="card" count={8} />
-          ) : (
+          ) : allProducts.length > 0 ? (
             allProducts.map((prod) => (
               <ProductCard key={prod.id} product={prod} />
             ))
+          ) : (
+            <div className="col-span-full py-10 text-center bg-slate-50 border border-dashed border-slate-200 rounded-2xl">
+              <p className="text-sm font-bold text-slate-500">No products uploaded yet.</p>
+              <p className="text-xs text-slate-400 mt-1">Uploaded products from the Admin Panel will immediately display here.</p>
+            </div>
           )}
         </div>
       </section>
