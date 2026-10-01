@@ -49,7 +49,13 @@ export const sortProductsByCustomOrder = (list: Product[]): Product[] => {
 export const getCustomCreatedProducts = (): Product[] => {
   try {
     const raw = localStorage.getItem('affordpro_custom_created_products');
-    return raw ? JSON.parse(raw) : [];
+    const list: Product[] = raw ? JSON.parse(raw) : [];
+    return list.map((p) => ({
+      ...p,
+      featured: p.featured !== undefined ? Boolean(p.featured) : true,
+      bestSeller: p.bestSeller !== undefined ? Boolean(p.bestSeller) : true,
+      newArrival: p.newArrival !== undefined ? Boolean(p.newArrival) : true,
+    }));
   } catch {
     return [];
   }
@@ -63,17 +69,17 @@ export const mergeProducts = (apiProds: Product[], mockProds: Product[]): Produc
   const uniqueMerged: Product[] = [];
 
   merged.forEach((p) => {
-    if (p && !seenIds.has(p.id) && !seenSlugs.has(p.slug)) {
+    if (p && p.id && !seenIds.has(p.id) && (!p.slug || !seenSlugs.has(p.slug))) {
       seenIds.add(p.id);
-      seenSlugs.add(p.slug);
+      if (p.slug) seenSlugs.add(p.slug);
       uniqueMerged.push(p);
     }
   });
 
   mockProds.forEach((mp) => {
-    if (mp && !seenIds.has(mp.id) && !seenSlugs.has(mp.slug)) {
+    if (mp && mp.id && !seenIds.has(mp.id) && (!mp.slug || !seenSlugs.has(mp.slug))) {
       seenIds.add(mp.id);
-      seenSlugs.add(mp.slug);
+      if (mp.slug) seenSlugs.add(mp.slug);
       uniqueMerged.push(mp);
     }
   });
@@ -105,7 +111,11 @@ export const productService = {
     let result = mergeProducts(apiProds, MOCK_PRODUCTS);
 
     if (filters?.categorySlug) {
-      result = result.filter(p => p.categorySlug === filters.categorySlug);
+      const catQuery = filters.categorySlug.toLowerCase();
+      result = result.filter(
+        p => (p.categorySlug && p.categorySlug.toLowerCase() === catQuery) ||
+             (p.category && p.category.toLowerCase() === catQuery)
+      );
     }
 
     if (filters?.productType && filters.productType !== 'ALL') {
@@ -117,16 +127,17 @@ export const productService = {
     }
 
     if (filters?.bestSellerOnly) {
-      result = result.filter(p => p.bestSeller);
+      const filteredBest = result.filter(p => p.bestSeller);
+      if (filteredBest.length > 0) result = filteredBest;
     }
 
     if (filters?.searchQuery) {
       const query = filters.searchQuery.toLowerCase();
       result = result.filter(p => 
         p.title.toLowerCase().includes(query) ||
-        p.shortDescription.toLowerCase().includes(query) ||
-        p.fullDescription.toLowerCase().includes(query) ||
-        p.category.toLowerCase().includes(query) ||
+        (p.shortDescription && p.shortDescription.toLowerCase().includes(query)) ||
+        (p.fullDescription && p.fullDescription.toLowerCase().includes(query)) ||
+        (p.category && p.category.toLowerCase().includes(query)) ||
         (p.tags && p.tags.some(t => t.toLowerCase().includes(query)))
       );
     }
@@ -182,17 +193,20 @@ export const productService = {
 
   async getFeaturedProducts(): Promise<Product[]> {
     const all = await this.getProducts();
-    return all.filter(p => p.featured);
+    const feat = all.filter(p => p.featured);
+    return feat.length > 0 ? feat : all;
   },
 
   async getBestSellers(): Promise<Product[]> {
     const all = await this.getProducts();
-    return all.filter(p => p.bestSeller);
+    const best = all.filter(p => p.bestSeller);
+    return best.length > 0 ? best : all;
   },
 
   async getNewArrivals(): Promise<Product[]> {
     const all = await this.getProducts();
-    return all.filter(p => p.newArrival || new Date(p.createdAt).getTime() > new Date('2026-01-15').getTime());
+    const news = all.filter(p => p.newArrival || new Date(p.createdAt).getTime() > new Date('2026-01-15').getTime());
+    return news.length > 0 ? news : all;
   },
 
   async getCourses(): Promise<Product[]> {
@@ -398,11 +412,23 @@ export const productService = {
     }
 
     if (createdProduct) {
+      // 1. Un-mark from deleted list if present
+      const currentDeleted = getDeletedIds().filter(
+        id => id !== createdProduct!.id && id !== createdProduct!.slug
+      );
+      localStorage.setItem('affordpro_deleted_products', JSON.stringify(currentDeleted));
+
+      // 2. Persist to custom created products list
       const customStored = getCustomCreatedProducts();
-      if (!customStored.some(p => p.id === createdProduct!.id || p.slug === createdProduct!.slug)) {
+      const existingIdx = customStored.findIndex(
+        p => p.id === createdProduct!.id || p.slug === createdProduct!.slug
+      );
+      if (existingIdx !== -1) {
+        customStored[existingIdx] = createdProduct;
+      } else {
         customStored.unshift(createdProduct);
-        localStorage.setItem('affordpro_custom_created_products', JSON.stringify(customStored));
       }
+      localStorage.setItem('affordpro_custom_created_products', JSON.stringify(customStored));
     }
 
     return createdProduct;
