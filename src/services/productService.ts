@@ -46,18 +46,39 @@ export const sortProductsByCustomOrder = (list: Product[]): Product[] => {
   });
 };
 
-export const mergeProducts = (apiProds: Product[], mockProds: Product[]): Product[] => {
-  const merged: Product[] = [...apiProds];
-  const seenIds = new Set(apiProds.map((p) => p.id));
-  const seenSlugs = new Set(apiProds.map((p) => p.slug));
+export const getCustomCreatedProducts = (): Product[] => {
+  try {
+    const raw = localStorage.getItem('affordpro_custom_created_products');
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
 
-  mockProds.forEach((mp) => {
-    if (!seenIds.has(mp.id) && !seenSlugs.has(mp.slug)) {
-      merged.push(mp);
+export const mergeProducts = (apiProds: Product[], mockProds: Product[]): Product[] => {
+  const custom = getCustomCreatedProducts();
+  const merged: Product[] = [...custom, ...apiProds];
+  const seenIds = new Set<string>();
+  const seenSlugs = new Set<string>();
+  const uniqueMerged: Product[] = [];
+
+  merged.forEach((p) => {
+    if (p && !seenIds.has(p.id) && !seenSlugs.has(p.slug)) {
+      seenIds.add(p.id);
+      seenSlugs.add(p.slug);
+      uniqueMerged.push(p);
     }
   });
 
-  const activeFiltered = filterOutDeleted(merged);
+  mockProds.forEach((mp) => {
+    if (mp && !seenIds.has(mp.id) && !seenSlugs.has(mp.slug)) {
+      seenIds.add(mp.id);
+      seenSlugs.add(mp.slug);
+      uniqueMerged.push(mp);
+    }
+  });
+
+  const activeFiltered = filterOutDeleted(uniqueMerged);
   return sortProductsByCustomOrder(activeFiltered);
 };
 
@@ -78,7 +99,7 @@ export const productService = {
         apiProds = prods;
       }
     } catch {
-      // Mock Data Fallback
+      // API Fallback
     }
 
     let result = mergeProducts(apiProds, MOCK_PRODUCTS);
@@ -106,7 +127,7 @@ export const productService = {
         p.shortDescription.toLowerCase().includes(query) ||
         p.fullDescription.toLowerCase().includes(query) ||
         p.category.toLowerCase().includes(query) ||
-        p.tags.some(t => t.toLowerCase().includes(query))
+        (p.tags && p.tags.some(t => t.toLowerCase().includes(query)))
       );
     }
 
@@ -146,82 +167,53 @@ export const productService = {
   },
 
   async getProductBySlug(slug: string): Promise<Product | null> {
-    const deleted = getDeletedIds();
-    if (deleted.includes(slug)) return null;
+    const all = await this.getProducts();
+    const found = all.find(p => p.slug === slug || p.id === slug);
+    if (found) return found;
 
     try {
       const p = await fetchApi<Product>(`/products/${slug}`);
-      if (p && (deleted.includes(p.id) || deleted.includes(p.slug))) return null;
-      return p;
+      if (p && filterOutDeleted([p]).length > 0) return p;
     } catch {
-      const product = MOCK_PRODUCTS.find(p => p.slug === slug);
-      if (product && (deleted.includes(product.id) || deleted.includes(product.slug))) return null;
-      return product || null;
+      // Fallback
     }
+    return null;
   },
 
   async getFeaturedProducts(): Promise<Product[]> {
-    try {
-      const prods = await fetchApi<Product[]>('/products/featured');
-      const mockFeat = MOCK_PRODUCTS.filter(p => p.featured);
-      return mergeProducts(prods, mockFeat);
-    } catch {
-      return filterOutDeleted(MOCK_PRODUCTS.filter(p => p.featured));
-    }
+    const all = await this.getProducts();
+    return all.filter(p => p.featured);
   },
 
   async getBestSellers(): Promise<Product[]> {
-    try {
-      const prods = await fetchApi<Product[]>('/products/best-selling');
-      const mockBest = MOCK_PRODUCTS.filter(p => p.bestSeller);
-      return mergeProducts(prods, mockBest);
-    } catch {
-      return filterOutDeleted(MOCK_PRODUCTS.filter(p => p.bestSeller));
-    }
+    const all = await this.getProducts();
+    return all.filter(p => p.bestSeller);
   },
 
   async getNewArrivals(): Promise<Product[]> {
-    try {
-      const prods = await fetchApi<Product[]>('/products/new');
-      const mockNew = MOCK_PRODUCTS.filter(p => p.newArrival || new Date(p.createdAt).getTime() > new Date('2026-01-15').getTime());
-      return mergeProducts(prods, mockNew);
-    } catch {
-      return filterOutDeleted(MOCK_PRODUCTS.filter(p => p.newArrival || new Date(p.createdAt).getTime() > new Date('2026-01-15').getTime()));
-    }
+    const all = await this.getProducts();
+    return all.filter(p => p.newArrival || new Date(p.createdAt).getTime() > new Date('2026-01-15').getTime());
   },
 
   async getCourses(): Promise<Product[]> {
-    try {
-      const prods = await fetchApi<Product[]>('/products?type=COURSE');
-      return filterOutDeleted(prods);
-    } catch {
-      return filterOutDeleted(MOCK_PRODUCTS.filter(p => p.productType === 'COURSE'));
-    }
+    const all = await this.getProducts();
+    return all.filter(p => p.productType === 'COURSE');
   },
 
   async getServices(): Promise<Product[]> {
-    try {
-      const prods = await fetchApi<Product[]>('/products?type=SERVICE');
-      return filterOutDeleted(prods);
-    } catch {
-      return filterOutDeleted(MOCK_PRODUCTS.filter(p => p.productType === 'SERVICE'));
-    }
+    const all = await this.getProducts();
+    return all.filter(p => p.productType === 'SERVICE');
   },
 
   async getRelatedProducts(product: Product, limit: number = 4): Promise<Product[]> {
-    try {
-      const prods = await fetchApi<Product[]>(`/products/${product.slug}/related`);
-      return filterOutDeleted(prods);
-    } catch {
-      return filterOutDeleted(
-        MOCK_PRODUCTS
-          .filter(p => p.id !== product.id && (p.categorySlug === product.categorySlug || p.productType === product.productType))
-          .slice(0, limit)
-      );
-    }
+    const all = await this.getProducts();
+    return all
+      .filter(p => p.id !== product.id && (p.categorySlug === product.categorySlug || p.productType === product.productType))
+      .slice(0, limit);
   },
 
   async updateProduct(id: string, data: Partial<Product>): Promise<Product> {
+    let updatedProduct: Product | null = null;
     let token = localStorage.getItem('affordpro_token') || localStorage.getItem('auth_token');
 
     if (!token) {
@@ -229,7 +221,7 @@ export const productService = {
         const loginRes = await fetch(`${API_BASE_URL}/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: 'admin@affordpro.com', password: 'Password123' }),
+          body: JSON.stringify({ username: 'Affordprojpr', password: 'Affordpro@#4450' }),
         });
         const loginData = await loginRes.json();
         if (loginRes.ok && loginData.token) {
@@ -252,17 +244,27 @@ export const productService = {
       });
       const resData = await response.json();
       if (response.ok && resData.product) {
-        return resData.product;
+        updatedProduct = resData.product;
       }
     } catch (e) {
       console.warn('API updateProduct failed', e);
     }
 
+    const customStored = getCustomCreatedProducts();
+    const cIdx = customStored.findIndex(p => p.id === id || p.slug === id);
+    if (cIdx !== -1) {
+      customStored[cIdx] = { ...customStored[cIdx], ...data, ...(updatedProduct || {}) };
+      localStorage.setItem('affordpro_custom_created_products', JSON.stringify(customStored));
+      if (!updatedProduct) updatedProduct = customStored[cIdx];
+    }
+
     const idx = MOCK_PRODUCTS.findIndex((p) => p.id === id || p.slug === id);
     if (idx !== -1) {
-      MOCK_PRODUCTS[idx] = { ...MOCK_PRODUCTS[idx], ...data };
-      return MOCK_PRODUCTS[idx];
+      MOCK_PRODUCTS[idx] = { ...MOCK_PRODUCTS[idx], ...data, ...(updatedProduct || {}) };
+      if (!updatedProduct) updatedProduct = MOCK_PRODUCTS[idx];
     }
+
+    if (updatedProduct) return updatedProduct;
     throw new Error('Product not found');
   },
 
@@ -272,6 +274,9 @@ export const productService = {
     if (!currentDeleted.includes(id)) currentDeleted.push(id);
     if (targetProd?.slug && !currentDeleted.includes(targetProd.slug)) currentDeleted.push(targetProd.slug);
     localStorage.setItem('affordpro_deleted_products', JSON.stringify(currentDeleted));
+
+    const customStored = getCustomCreatedProducts().filter(p => p.id !== id && p.slug !== id);
+    localStorage.setItem('affordpro_custom_created_products', JSON.stringify(customStored));
 
     const idx = MOCK_PRODUCTS.findIndex((p) => p.id === id || p.slug === id);
     if (idx !== -1) {
@@ -285,7 +290,7 @@ export const productService = {
         const loginRes = await fetch(`${API_BASE_URL}/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: 'admin@affordpro.com', password: 'Password123' }),
+          body: JSON.stringify({ username: 'Affordprojpr', password: 'Affordpro@#4450' }),
         });
         const loginData = await loginRes.json();
         if (loginRes.ok && loginData.token) {
@@ -309,5 +314,97 @@ export const productService = {
     }
 
     return true;
+  },
+
+  async createProduct(data: Partial<Product>): Promise<Product> {
+    let token = localStorage.getItem('affordpro_token') || localStorage.getItem('auth_token');
+
+    if (!token) {
+      try {
+        const loginRes = await fetch(`${API_BASE_URL}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: 'Affordprojpr', password: 'Affordpro@#4450' }),
+        });
+        const loginData = await loginRes.json();
+        if (loginRes.ok && loginData.token) {
+          token = loginData.token;
+          localStorage.setItem('affordpro_token', loginData.token);
+        }
+      } catch (e) {
+        console.warn('Auto admin login failed', e);
+      }
+    }
+
+    let createdProduct: Product | null = null;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/products`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      });
+
+      const resData = await response.json();
+      if (response.ok && (resData.product || resData.id)) {
+        createdProduct = resData.product || resData;
+      }
+    } catch (e) {
+      console.warn('API createProduct failed, using local fallback state', e);
+    }
+
+    if (!createdProduct) {
+      const rawTitle = data.title || 'New Product';
+      const slug = data.slug || rawTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+      const fullProd: Product = {
+        id: `usr-prod-${Date.now()}`,
+        title: rawTitle,
+        slug: `${slug}-${Date.now().toString().slice(-4)}`,
+        price: data.price || 299,
+        compareAtPrice: data.compareAtPrice,
+        discount: data.compareAtPrice ? Math.round(((data.compareAtPrice - (data.price || 299)) / data.compareAtPrice) * 100) : 0,
+        currency: data.currency || '₹',
+        category: data.category || 'Digital Products',
+        categorySlug: data.categorySlug || 'digital-products',
+        productType: data.productType || 'DIGITAL_PRODUCT',
+        format: data.format || 'ZIP Archive (.zip)',
+        deliveryMethod: data.deliveryMethod || 'Instant Download',
+        accessDuration: data.accessDuration || 'Lifetime Access',
+        rating: data.rating || 4.9,
+        reviewCount: data.reviewCount || 1420,
+        shortDescription: data.shortDescription || rawTitle,
+        fullDescription: data.fullDescription || data.shortDescription || rawTitle,
+        features: data.features || [],
+        whatIsIncluded: data.whatIsIncluded || [],
+        whoIsThisFor: data.whoIsThisFor || [],
+        requirements: data.requirements || [],
+        tags: data.tags || ['digital', 'resource'],
+        images: data.images?.length ? data.images : ['https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80'],
+        downloadUrl: data.downloadUrl || 'https://example.com/downloads/sample-bundle.zip',
+        featured: data.featured !== undefined ? Boolean(data.featured) : true,
+        bestSeller: data.bestSeller !== undefined ? Boolean(data.bestSeller) : true,
+        newArrival: data.newArrival !== undefined ? Boolean(data.newArrival) : true,
+        status: 'IN_STOCK',
+        downloadable: data.productType !== 'SERVICE',
+        serviceBased: data.productType === 'SERVICE',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      createdProduct = fullProd;
+    }
+
+    if (createdProduct) {
+      const customStored = getCustomCreatedProducts();
+      if (!customStored.some(p => p.id === createdProduct!.id || p.slug === createdProduct!.slug)) {
+        customStored.unshift(createdProduct);
+        localStorage.setItem('affordpro_custom_created_products', JSON.stringify(customStored));
+      }
+    }
+
+    return createdProduct;
   }
 };
