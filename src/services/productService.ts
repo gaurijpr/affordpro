@@ -24,12 +24,41 @@ const getSavedProductOrder = (): string[] => {
   }
 };
 
-export const saveProductOrder = (orderedIds: string[]): void => {
+export const safeSetLocalStorage = (key: string, value: string): boolean => {
   try {
-    localStorage.setItem('affordpro_product_order', JSON.stringify(orderedIds));
-  } catch (e) {
-    console.warn('Failed to save product order', e);
+    localStorage.setItem(key, value);
+    return true;
+  } catch (e: any) {
+    console.warn(`localStorage setItem failed for "${key}". Attempting quota recovery:`, e);
+    try {
+      if (key === 'affordpro_custom_created_products') {
+        const list: Product[] = JSON.parse(value);
+        // Replace large base64 image strings with standard fallback image to prevent QuotaExceededError
+        const pruned = list.map((p) => ({
+          ...p,
+          images: p.images?.map((img) =>
+            img && img.startsWith('data:image/') && img.length > 50000
+              ? 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80'
+              : img
+          ) || [],
+        }));
+        localStorage.setItem(key, JSON.stringify(pruned.slice(0, 50)));
+        return true;
+      } else {
+        localStorage.removeItem('affordpro_all_orders');
+        localStorage.removeItem('affordpro_coupon');
+        localStorage.setItem(key, value);
+        return true;
+      }
+    } catch (fallbackErr) {
+      console.error(`Unable to save "${key}" to localStorage:`, fallbackErr);
+      return false;
+    }
   }
+};
+
+export const saveProductOrder = (orderedIds: string[]): void => {
+  safeSetLocalStorage('affordpro_product_order', JSON.stringify(orderedIds));
 };
 
 export const sortProductsByCustomOrder = (list: Product[]): Product[] => {
@@ -268,7 +297,7 @@ export const productService = {
     const cIdx = customStored.findIndex(p => p.id === id || p.slug === id);
     if (cIdx !== -1) {
       customStored[cIdx] = { ...customStored[cIdx], ...data, ...(updatedProduct || {}) };
-      localStorage.setItem('affordpro_custom_created_products', JSON.stringify(customStored));
+      safeSetLocalStorage('affordpro_custom_created_products', JSON.stringify(customStored));
       if (!updatedProduct) updatedProduct = customStored[cIdx];
     }
 
@@ -287,10 +316,10 @@ export const productService = {
     const currentDeleted = getDeletedIds();
     if (!currentDeleted.includes(id)) currentDeleted.push(id);
     if (targetProd?.slug && !currentDeleted.includes(targetProd.slug)) currentDeleted.push(targetProd.slug);
-    localStorage.setItem('affordpro_deleted_products', JSON.stringify(currentDeleted));
+    safeSetLocalStorage('affordpro_deleted_products', JSON.stringify(currentDeleted));
 
     const customStored = getCustomCreatedProducts().filter(p => p.id !== id && p.slug !== id);
-    localStorage.setItem('affordpro_custom_created_products', JSON.stringify(customStored));
+    safeSetLocalStorage('affordpro_custom_created_products', JSON.stringify(customStored));
 
     const idx = MOCK_PRODUCTS.findIndex((p) => p.id === id || p.slug === id);
     if (idx !== -1) {
@@ -416,9 +445,9 @@ export const productService = {
       const currentDeleted = getDeletedIds().filter(
         id => id !== createdProduct!.id && id !== createdProduct!.slug
       );
-      localStorage.setItem('affordpro_deleted_products', JSON.stringify(currentDeleted));
+      safeSetLocalStorage('affordpro_deleted_products', JSON.stringify(currentDeleted));
 
-      // 2. Persist to custom created products list
+      // 2. Persist to custom created products list safely
       const customStored = getCustomCreatedProducts();
       const existingIdx = customStored.findIndex(
         p => p.id === createdProduct!.id || p.slug === createdProduct!.slug
@@ -428,7 +457,15 @@ export const productService = {
       } else {
         customStored.unshift(createdProduct);
       }
-      localStorage.setItem('affordpro_custom_created_products', JSON.stringify(customStored));
+      safeSetLocalStorage('affordpro_custom_created_products', JSON.stringify(customStored));
+
+      // 3. Always add to MOCK_PRODUCTS memory list so it is immediately accessible in active runtime
+      const mockIdx = MOCK_PRODUCTS.findIndex(p => p.id === createdProduct!.id || p.slug === createdProduct!.slug);
+      if (mockIdx !== -1) {
+        MOCK_PRODUCTS[mockIdx] = createdProduct;
+      } else {
+        MOCK_PRODUCTS.unshift(createdProduct);
+      }
     }
 
     return createdProduct;

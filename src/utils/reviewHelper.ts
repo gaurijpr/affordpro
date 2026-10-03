@@ -2,7 +2,7 @@ import { Review } from '../types/review';
 
 // Helper to get a high social proof review count (At least 1K+)
 export const getHighReviewCount = (productId: string, currentCount: number = 0): number => {
-  if (currentCount >= 1000) return currentCount;
+  if (currentCount > 0) return currentCount;
   let hash = 0;
   for (let i = 0; i < productId.length; i++) {
     hash = productId.charCodeAt(i) + ((hash << 5) - hash);

@@ -12,6 +12,7 @@ import { pageService, PageContent } from '../services/pageService';
 import { orderService } from '../services/orderService';
 import { API_BASE_URL } from '../services/api';
 import { parseReviewsContent } from '../utils/reviewHelper';
+import { compressImage } from '../utils/imageCompressor';
 import { Product } from '../types/product';
 import { Category } from '../types/category';
 import { Review } from '../types/review';
@@ -1455,19 +1456,17 @@ export const Admin: React.FC = () => {
                   type="file"
                   id="desktop-image-upload"
                   accept="image/*"
-                  onChange={(e) => {
+                  onChange={async (e) => {
                     const file = e.target.files?.[0];
                     if (file) {
-                      if (file.size > 5 * 1024 * 1024) {
-                        showToast('File size must be under 5MB', 'error');
-                        return;
+                      try {
+                        showToast('Optimizing desktop image...', 'info');
+                        const compressedUrl = await compressImage(file);
+                        setNewImageUrl(compressedUrl);
+                        showToast('Desktop image uploaded and optimized successfully!', 'success');
+                      } catch {
+                        showToast('Failed to process image file.', 'error');
                       }
-                      const reader = new FileReader();
-                      reader.onloadend = () => {
-                        setNewImageUrl(reader.result as string);
-                        showToast('Desktop image uploaded successfully!', 'success');
-                      };
-                      reader.readAsDataURL(file);
                     }
                   }}
                   className="hidden"
@@ -1753,19 +1752,17 @@ export const Admin: React.FC = () => {
                   type="file"
                   id="edit-desktop-image-picker"
                   accept="image/*"
-                  onChange={(e) => {
+                  onChange={async (e) => {
                     const file = e.target.files?.[0];
                     if (file) {
-                      if (file.size > 5 * 1024 * 1024) {
-                        showToast('File size must be under 5MB', 'error');
-                        return;
+                      try {
+                        showToast('Optimizing desktop image...', 'info');
+                        const compressedUrl = await compressImage(file);
+                        setEditImageUrl(compressedUrl);
+                        showToast('Desktop image uploaded and optimized successfully!', 'success');
+                      } catch {
+                        showToast('Failed to process image file.', 'error');
                       }
-                      const reader = new FileReader();
-                      reader.onloadend = () => {
-                        setEditImageUrl(reader.result as string);
-                        showToast('Desktop image uploaded successfully!', 'success');
-                      };
-                      reader.readAsDataURL(file);
                     }
                   }}
                   className="hidden"
