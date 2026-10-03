@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { 
   ShoppingBag, Heart, CheckCircle2, Download, Clock, ShieldCheck, 
   Sparkles, Video, GraduationCap, Layout, Star, Share2, FileText, 
-  HelpCircle, AlertCircle, MessageSquarePlus 
+  HelpCircle, AlertCircle, MessageSquarePlus, Zap 
 } from 'lucide-react';
 import { productService } from '../services/productService';
 import { reviewService } from '../services/reviewService';
@@ -297,11 +297,112 @@ export const ProductDetail: React.FC = () => {
       {/* LOWER SECTION: Detailed Information Tabs & Specifications */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
         <div className="lg:col-span-8 space-y-10">
-          {/* About This Product */}
-          <section className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 card-shadow space-y-4">
-            <h2 className="text-2xl font-black text-slate-900">About This Product</h2>
-            <div className="text-slate-600 text-sm leading-relaxed whitespace-pre-line">
-              {product.fullDescription}
+          {/* About This Product - Enhanced Highlighted Styling */}
+          <section className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 card-shadow space-y-6">
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+              <div className="p-2.5 bg-gradient-to-br from-indigo-600 to-violet-600 text-white rounded-2xl shadow-md">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-200">
+                  Product Overview
+                </span>
+                <h2 className="text-2xl font-black text-slate-900 mt-0.5">About This Product</h2>
+              </div>
+            </div>
+
+            {/* Formatted Highlight Cards & Structured Content */}
+            <div className="space-y-4">
+              {product.fullDescription ? (
+                product.fullDescription.split(/\r?\n/).map((l) => l.trim()).filter(Boolean).map((line, idx) => {
+                  const isBullet = /^[-*•✔★🚀👉\d+.]/.test(line);
+                  const isHeader = line.endsWith(':') || (line.length < 50 && (line.startsWith('#') || line === line.toUpperCase()));
+                  const isCallout = /^(note|bonus|important|why choose|features|included|guarantee)/i.test(line);
+
+                  if (isHeader) {
+                    return (
+                      <div key={idx} className="pt-3 pb-1">
+                        <h3 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2.5">
+                          <span className="w-2.5 h-5 bg-gradient-to-b from-indigo-600 to-violet-600 rounded-full inline-block shrink-0"></span>
+                          <span>{line.replace(/^#+\s*/, '')}</span>
+                        </h3>
+                      </div>
+                    );
+                  }
+
+                  if (isBullet) {
+                    const content = line.replace(/^[-*•✔★🚀👉\d+.]+\s*/, '');
+                    return (
+                      <div
+                        key={idx}
+                        className="flex items-start gap-3 p-4 bg-gradient-to-r from-slate-50 via-indigo-50/30 to-purple-50/20 border border-indigo-100/80 rounded-2xl shadow-xs transition-all hover:border-indigo-300 hover:shadow-sm"
+                      >
+                        <div className="p-1.5 bg-gradient-to-br from-indigo-600 to-violet-600 text-white rounded-xl shrink-0 mt-0.5 shadow-xs">
+                          <CheckCircle2 className="w-4 h-4" />
+                        </div>
+                        <span className="text-slate-800 text-sm font-extrabold leading-relaxed">
+                          {content}
+                        </span>
+                      </div>
+                    );
+                  }
+
+                  if (isCallout) {
+                    return (
+                      <div
+                        key={idx}
+                        className="p-4 bg-gradient-to-r from-amber-50 via-indigo-50 to-purple-50 border-l-4 border-indigo-600 rounded-r-2xl shadow-xs space-y-1"
+                      >
+                        <div className="flex items-center gap-1.5 text-indigo-950 font-black text-xs uppercase tracking-wider">
+                          <Sparkles className="w-4 h-4 text-amber-500 fill-amber-400" />
+                          <span>Key Product Highlight</span>
+                        </div>
+                        <p className="text-slate-900 text-sm font-extrabold leading-relaxed">{line}</p>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div
+                      key={idx}
+                      className="p-4 bg-gradient-to-r from-slate-50/90 via-indigo-50/20 to-slate-50/90 border border-slate-200/80 rounded-2xl text-slate-800 text-sm sm:text-base font-semibold leading-relaxed shadow-xs hover:border-slate-300 transition-colors"
+                    >
+                      {line}
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-slate-700 text-sm font-semibold">
+                  No detailed description available.
+                </div>
+              )}
+            </div>
+
+            {/* Bottom Highlighted Trust & Quality Features Banner */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 border-t border-slate-100">
+              <div className="flex items-center gap-3 p-3 bg-indigo-50/80 border border-indigo-100 rounded-2xl">
+                <ShieldCheck className="w-5 h-5 text-indigo-600 shrink-0" />
+                <div>
+                  <h4 className="text-xs font-black text-indigo-950">100% Quality Verified</h4>
+                  <p className="text-[11px] text-indigo-700 font-semibold">Tested & ready to use</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 p-3 bg-emerald-50/80 border border-emerald-100 rounded-2xl">
+                <Zap className="w-5 h-5 text-emerald-600 shrink-0" />
+                <div>
+                  <h4 className="text-xs font-black text-emerald-950">Instant Access</h4>
+                  <p className="text-[11px] text-emerald-700 font-semibold">Direct Google Drive link</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 p-3 bg-purple-50/80 border border-purple-100 rounded-2xl">
+                <GraduationCap className="w-5 h-5 text-purple-600 shrink-0" />
+                <div>
+                  <h4 className="text-xs font-black text-purple-950">Commercial License</h4>
+                  <p className="text-[11px] text-purple-700 font-semibold">Full agency & resale rights</p>
+                </div>
+              </div>
             </div>
           </section>
 
