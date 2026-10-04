@@ -24,34 +24,64 @@ const getSavedProductOrder = (): string[] => {
   }
 };
 
+export const getCategoryFallbackImage = (product: Partial<Product>): string => {
+  const title = (product.title || '').toLowerCase();
+  const cat = (product.category || product.categorySlug || '').toLowerCase();
+
+  // 1. Cartoon Reels / Kids Reels
+  if (title.includes('cartoon') || title.includes('kids reels') || title.includes('animation')) {
+    return 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=800&q=80';
+  }
+
+  // 2. Reels & Video Bundles / AI Reels
+  if (title.includes('reels') || title.includes('video') || title.includes('viral') || cat.includes('reels')) {
+    return 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=800&q=80';
+  }
+
+  // 3. Canva Templates / Social Media Graphics
+  if (title.includes('canva') || title.includes('template') || cat.includes('canva')) {
+    return 'https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&w=800&q=80';
+  }
+
+  // 4. Healthy Diet / E-Books / Guides / Meal Plans
+  if (title.includes('diet') || title.includes('health') || title.includes('plan') || title.includes('pdf') || title.includes('book')) {
+    return 'https://images.unsplash.com/photo-1490818387583-1baba5e638af?auto=format&fit=crop&w=800&q=80';
+  }
+
+  // 5. Courses / Tutorials
+  if (title.includes('course') || cat.includes('course')) {
+    return 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=800&q=80';
+  }
+
+  // Default Digital Product Cover
+  return 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80';
+};
+
 export const safeSetLocalStorage = (key: string, value: string): boolean => {
   try {
     localStorage.setItem(key, value);
     return true;
   } catch (e: any) {
-    console.warn(`localStorage setItem failed for "${key}". Attempting quota recovery:`, e);
+    console.warn(`localStorage setItem failed for "${key}". Attempting safe quota recovery:`, e);
     try {
-      if (key === 'affordpro_custom_created_products') {
-        const list: Product[] = JSON.parse(value);
-        // Replace large base64 image strings with standard fallback image to prevent QuotaExceededError
-        const pruned = list.map((p) => ({
-          ...p,
-          images: p.images?.map((img) =>
-            img && img.startsWith('data:image/') && img.length > 50000
-              ? 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80'
-              : img
-          ) || [],
-        }));
-        localStorage.setItem(key, JSON.stringify(pruned.slice(0, 50)));
-        return true;
-      } else {
-        localStorage.removeItem('affordpro_all_orders');
-        localStorage.removeItem('affordpro_coupon');
-        localStorage.setItem(key, value);
-        return true;
-      }
+      // Clear non-critical caches to free up storage space
+      localStorage.removeItem('affordpro_all_orders');
+      localStorage.removeItem('affordpro_coupon');
+      localStorage.removeItem('affordpro_deleted_products');
+
+      localStorage.setItem(key, value);
+      return true;
     } catch (fallbackErr) {
-      console.error(`Unable to save "${key}" to localStorage:`, fallbackErr);
+      try {
+        if (key === 'affordpro_custom_created_products') {
+          const list: Product[] = JSON.parse(value);
+          // Store up to 30 products preserving custom images
+          localStorage.setItem(key, JSON.stringify(list.slice(0, 30)));
+          return true;
+        }
+      } catch {
+        console.error(`Unable to save "${key}" to localStorage:`, fallbackErr);
+      }
       return false;
     }
   }
@@ -79,12 +109,22 @@ export const getCustomCreatedProducts = (): Product[] => {
   try {
     const raw = localStorage.getItem('affordpro_custom_created_products');
     const list: Product[] = raw ? JSON.parse(raw) : [];
-    return list.map((p) => ({
-      ...p,
-      featured: p.featured !== undefined ? Boolean(p.featured) : true,
-      bestSeller: p.bestSeller !== undefined ? Boolean(p.bestSeller) : true,
-      newArrival: p.newArrival !== undefined ? Boolean(p.newArrival) : true,
-    }));
+    return list.map((p) => {
+      // Replace old generic purple wallpaper placeholders with crisp, category-specific covers
+      const genericPlaceholder = 'photo-1618005182384-a83a8bd57fbe';
+      const rawImages = p.images || [];
+      const hasValidCustomImg = rawImages.length > 0 && rawImages[0] && !rawImages[0].includes(genericPlaceholder);
+
+      const primaryImage = hasValidCustomImg ? rawImages[0] : getCategoryFallbackImage(p);
+
+      return {
+        ...p,
+        images: [primaryImage, ...(rawImages.length > 1 ? rawImages.slice(1) : [])],
+        featured: p.featured !== undefined ? Boolean(p.featured) : true,
+        bestSeller: p.bestSeller !== undefined ? Boolean(p.bestSeller) : true,
+        newArrival: p.newArrival !== undefined ? Boolean(p.newArrival) : true,
+      };
+    });
   } catch {
     return [];
   }

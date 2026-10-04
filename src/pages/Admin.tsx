@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
-import { productService } from '../services/productService';
+import { productService, getCategoryFallbackImage } from '../services/productService';
 import { categoryService } from '../services/categoryService';
 import { reviewService } from '../services/reviewService';
 import { pageService, PageContent } from '../services/pageService';
@@ -639,7 +639,7 @@ export const Admin: React.FC = () => {
         features: newFeaturesStr.split('\n').map((s) => s.trim()).filter(Boolean),
         whatIsIncluded: newWhatIsIncludedStr.split('\n').map((s) => s.trim()).filter(Boolean),
         whoIsThisFor: newWhoIsThisForStr.split('\n').map((s) => s.trim()).filter(Boolean),
-        images: [newImageUrl || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80'],
+        images: [newImageUrl || getCategoryFallbackImage({ title: newTitle, category: newCategory, categorySlug: newCategory })],
         downloadUrl: newDownloadUrl || 'https://example.com/downloads/sample-bundle.zip',
         featured: isFeatured,
         bestSeller: isBestSeller,

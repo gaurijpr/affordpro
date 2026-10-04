@@ -1,8 +1,9 @@
 // Helper to compress uploaded image files before converting to Data URLs to prevent localStorage QuotaExceededError
-export const compressImage = (file: File, maxWidth = 800, maxHeight = 800, quality = 0.75): Promise<string> => {
+export const compressImage = (file: File, maxWidth = 600, maxHeight = 600, quality = 0.65): Promise<string> => {
   return new Promise((resolve) => {
+    const defaultFallback = 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80';
     if (!file || !file.type.startsWith('image/')) {
-      resolve('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80');
+      resolve(defaultFallback);
       return;
     }
 
@@ -10,7 +11,7 @@ export const compressImage = (file: File, maxWidth = 800, maxHeight = 800, quali
     reader.onload = (e) => {
       const dataUrl = e.target?.result as string;
       if (!dataUrl) {
-        resolve('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80');
+        resolve(defaultFallback);
         return;
       }
 
@@ -50,7 +51,7 @@ export const compressImage = (file: File, maxWidth = 800, maxHeight = 800, quali
       img.onerror = () => resolve(dataUrl);
       img.src = dataUrl;
     };
-    reader.onerror = () => resolve('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80');
+    reader.onerror = () => resolve(defaultFallback);
     reader.readAsDataURL(file);
   });
 };
