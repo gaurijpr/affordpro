@@ -132,24 +132,57 @@ export const getCustomCreatedProducts = (): Product[] => {
 
 export const mergeProducts = (apiProds: Product[], mockProds: Product[]): Product[] => {
   const custom = getCustomCreatedProducts();
-  const merged: Product[] = [...custom, ...apiProds];
+
+  // Create lookup maps for custom products by id, slug, and normalized title
+  const customById = new Map<string, Product>();
+  const customBySlug = new Map<string, Product>();
+  const customByTitle = new Map<string, Product>();
+
+  custom.forEach((cp) => {
+    if (cp.id) customById.set(cp.id, cp);
+    if (cp.slug) customBySlug.set(cp.slug, cp);
+    if (cp.title) customByTitle.set(cp.title.toLowerCase().replace(/[^a-z0-9]+/g, ''), cp);
+  });
+
+  const processedApi: Product[] = (apiProds || []).map((ap) => {
+    const normTitle = (ap.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+    const customMatch = customById.get(ap.id) || (ap.slug ? customBySlug.get(ap.slug) : null) || customByTitle.get(normTitle);
+
+    if (customMatch) {
+      return customMatch;
+    }
+
+    const rawImages = ap.images || [];
+    const genericPlaceholder = 'photo-1618005182384-a83a8bd57fbe';
+    const hasValidImg = rawImages.length > 0 && rawImages[0] && !rawImages[0].includes(genericPlaceholder);
+    const primaryImg = hasValidImg ? rawImages[0] : getCategoryFallbackImage(ap);
+
+    return {
+      ...ap,
+      images: [primaryImg, ...(rawImages.length > 1 ? rawImages.slice(1) : [])],
+    };
+  });
+
+  const merged: Product[] = [...custom, ...processedApi];
   const seenIds = new Set<string>();
   const seenSlugs = new Set<string>();
+  const seenTitles = new Set<string>();
   const uniqueMerged: Product[] = [];
 
   merged.forEach((p) => {
-    if (p && p.id && !seenIds.has(p.id) && (!p.slug || !seenSlugs.has(p.slug))) {
-      seenIds.add(p.id);
-      if (p.slug) seenSlugs.add(p.slug);
-      uniqueMerged.push(p);
-    }
-  });
+    if (!p || !p.id) return;
+    const normTitle = (p.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+    const normSlug = (p.slug || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
 
-  mockProds.forEach((mp) => {
-    if (mp && mp.id && !seenIds.has(mp.id) && (!mp.slug || !seenSlugs.has(mp.slug))) {
-      seenIds.add(mp.id);
-      if (mp.slug) seenSlugs.add(mp.slug);
-      uniqueMerged.push(mp);
+    if (
+      !seenIds.has(p.id) &&
+      (!normSlug || !seenSlugs.has(normSlug)) &&
+      (!normTitle || !seenTitles.has(normTitle))
+    ) {
+      seenIds.add(p.id);
+      if (normSlug) seenSlugs.add(normSlug);
+      if (normTitle) seenTitles.add(normTitle);
+      uniqueMerged.push(p);
     }
   });
 
