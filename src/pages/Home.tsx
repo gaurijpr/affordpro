@@ -567,7 +567,9 @@ export const Home: React.FC = () => {
               </div>
               <p className="text-slate-600 text-xs leading-relaxed italic">"{item.text}"</p>
               <div className="flex items-center gap-3 pt-2 border-t border-slate-100">
-                <img src={item.avatar} alt={item.name} className="w-10 h-10 rounded-full object-cover border border-slate-200" />
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 text-white font-black text-xs flex items-center justify-center border border-indigo-200 shadow-xs shrink-0">
+                  {item.name.charAt(0).toUpperCase()}
+                </div>
                 <div>
                   <h4 className="font-black text-slate-900 text-xs">{item.name}</h4>
                   <p className="text-slate-400 text-[11px] font-semibold">{item.role}</p>

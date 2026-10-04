@@ -32,6 +32,7 @@ export const ProductDetail: React.FC = () => {
 
   const [product, setProduct] = useState<Product | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [visibleReviewCount, setVisibleReviewCount] = useState<number>(30);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [selectedImage, setSelectedImage] = useState<string>('');
   const [loading, setLoading] = useState(true);
@@ -509,22 +510,14 @@ export const ProductDetail: React.FC = () => {
             </div>
 
             {/* Genuine Customer Reviews Scrollable List Container */}
-            <div className="max-h-[520px] overflow-y-auto pr-3 space-y-6 divide-y divide-slate-100 custom-scrollbar border-t border-slate-100 pt-4">
-              {reviews.map((rev) => (
+            <div className="max-h-[560px] overflow-y-auto pr-3 space-y-6 divide-y divide-slate-100 custom-scrollbar border-t border-slate-100 pt-4">
+              {reviews.slice(0, visibleReviewCount).map((rev) => (
                 <div key={rev.id} className="pt-6 first:pt-0 space-y-3">
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <div className="flex items-center gap-3">
-                      {rev.userAvatar ? (
-                        <img
-                          src={rev.userAvatar}
-                          alt={rev.userName}
-                          className="w-10 h-10 rounded-full object-cover border-2 border-indigo-100 shadow-xs"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 font-black text-sm flex items-center justify-center border-2 border-indigo-200">
-                          {rev.userName.charAt(0)}
-                        </div>
-                      )}
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 text-white font-black text-sm flex items-center justify-center border-2 border-indigo-200 shadow-xs shrink-0">
+                        {rev.userName ? rev.userName.charAt(0).toUpperCase() : 'V'}
+                      </div>
 
                       <div>
                         <div className="flex items-center gap-2">
@@ -547,6 +540,19 @@ export const ProductDetail: React.FC = () => {
                 </div>
               ))}
             </div>
+
+            {reviews.length > visibleReviewCount && (
+              <div className="text-center pt-4 border-t border-slate-100">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setVisibleReviewCount((prev) => prev + 50)}
+                  className="text-xs font-bold"
+                >
+                  Load More Verified Reviews (Showing {visibleReviewCount} of {reviews.length})
+                </Button>
+              </div>
+            )}
           </section>
         </div>
 

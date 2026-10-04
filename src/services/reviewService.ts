@@ -1,16 +1,59 @@
 import { Review } from '../types/review';
 import { MOCK_REVIEWS } from '../mock/data';
 import { fetchApi } from './api';
+import { safeSetLocalStorage } from './productService';
+
+const IN_MEMORY_CUSTOM_REVIEWS = new Map<string, Review[]>();
 
 export const reviewService = {
   getCustomReviews(idOrSlug: string): Review[] | null {
     if (!idOrSlug) return null;
+
+    // 1. Direct in-memory lookup
+    if (IN_MEMORY_CUSTOM_REVIEWS.has(idOrSlug)) {
+      return IN_MEMORY_CUSTOM_REVIEWS.get(idOrSlug)!;
+    }
+
+    // Normalized search in in-memory map
+    const norm = idOrSlug.toLowerCase().replace(/[^a-z0-9]+/g, '');
+    if (norm) {
+      for (const [key, list] of IN_MEMORY_CUSTOM_REVIEWS.entries()) {
+        const normKey = key.toLowerCase().replace(/[^a-z0-9]+/g, '');
+        if (normKey === norm || (norm.length > 5 && normKey.includes(norm)) || (normKey.length > 5 && norm.includes(normKey))) {
+          return list;
+        }
+      }
+    }
+
+    // 2. LocalStorage lookup
     try {
       const stored = localStorage.getItem(`affordpro_custom_reviews_${idOrSlug}`);
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+          const cleaned = parsed.map((r) => ({ ...r, userAvatar: undefined }));
+          IN_MEMORY_CUSTOM_REVIEWS.set(idOrSlug, cleaned);
+          return cleaned;
+        }
+      }
+
+      // Fuzzy scan in localStorage keys
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('affordpro_custom_reviews_')) {
+          const keyParam = key.replace('affordpro_custom_reviews_', '');
+          const normKeyParam = keyParam.toLowerCase().replace(/[^a-z0-9]+/g, '');
+          if (norm && normKeyParam && (normKeyParam === norm || norm.includes(normKeyParam) || normKeyParam.includes(norm))) {
+            const item = localStorage.getItem(key);
+            if (item) {
+              const parsed = JSON.parse(item);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                const cleaned = parsed.map((r) => ({ ...r, userAvatar: undefined }));
+                IN_MEMORY_CUSTOM_REVIEWS.set(idOrSlug, cleaned);
+                return cleaned;
+              }
+            }
+          }
         }
       }
     } catch {
@@ -21,25 +64,42 @@ export const reviewService = {
 
   saveCustomReviews(id: string, slug: string | undefined, reviews: Review[]): void {
     if (!reviews || !reviews.length) return;
+    // Omit userAvatar as requested by user ("I didn't want any image in reviews")
     const formatted = reviews.map((r, idx) => ({
-      ...r,
       id: r.id || `rev-custom-${id}-${idx}`,
       productId: id,
+      userName: r.userName || `Verified Customer ${idx + 1}`,
+      rating: Number(r.rating) || 5,
+      title: r.title || 'Verified Purchase Review',
+      comment: r.comment || r.title || 'High quality digital product!',
+      date: r.date || 'Verified Buyer',
+      verifiedPurchase: r.verifiedPurchase !== false,
+      userAvatar: undefined,
     }));
+
+    // Cache in memory for instant retrieval
+    if (id) IN_MEMORY_CUSTOM_REVIEWS.set(id, formatted);
+    if (slug) IN_MEMORY_CUSTOM_REVIEWS.set(slug, formatted);
+
+    const normId = id.toLowerCase().replace(/[^a-z0-9]+/g, '');
+    if (normId) IN_MEMORY_CUSTOM_REVIEWS.set(normId, formatted);
+    if (slug) {
+      const normSlug = slug.toLowerCase().replace(/[^a-z0-9]+/g, '');
+      if (normSlug) IN_MEMORY_CUSTOM_REVIEWS.set(normSlug, formatted);
+    }
+
+    // Save to localStorage safely
     try {
-      if (id) {
-        localStorage.setItem(`affordpro_custom_reviews_${id}`, JSON.stringify(formatted));
-      }
-      if (slug) {
-        localStorage.setItem(`affordpro_custom_reviews_${slug}`, JSON.stringify(formatted));
-      }
+      const jsonStr = JSON.stringify(formatted);
+      if (id) safeSetLocalStorage(`affordpro_custom_reviews_${id}`, jsonStr);
+      if (slug && slug !== id) safeSetLocalStorage(`affordpro_custom_reviews_${slug}`, jsonStr);
     } catch (e) {
-      console.warn('Failed to save custom reviews', e);
+      console.warn('Failed to save custom reviews to localStorage', e);
     }
   },
 
   async getProductReviews(productId: string, slug?: string): Promise<{ reviews: Review[]; isCustom: boolean }> {
-    // 1. Check local custom reviews first
+    // 1. Check local / memory custom reviews first
     const customById = this.getCustomReviews(productId);
     if (customById && customById.length > 0) {
       return { reviews: customById, isCustom: true };
@@ -55,14 +115,16 @@ export const reviewService = {
     try {
       const apiRevs = await fetchApi<Review[]>(`/products/${productId}/reviews`);
       if (apiRevs && apiRevs.length > 0) {
-        return { reviews: apiRevs, isCustom: true };
+        const cleanedApi = apiRevs.map((r) => ({ ...r, userAvatar: undefined }));
+        return { reviews: cleanedApi, isCustom: true };
       }
     } catch {
       // fallback
     }
 
-    // 3. Fallback mock reviews
-    const mock = MOCK_REVIEWS[productId] || (slug ? MOCK_REVIEWS[slug] : null) || [];
+    // 3. Fallback mock reviews (with userAvatar removed)
+    const rawMock = MOCK_REVIEWS[productId] || (slug ? MOCK_REVIEWS[slug] : null) || [];
+    const mock = rawMock.map((r) => ({ ...r, userAvatar: undefined }));
     return { reviews: mock, isCustom: false };
   },
 
