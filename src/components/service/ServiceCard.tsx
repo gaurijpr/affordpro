@@ -73,6 +73,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service }) => {
               discount={service.discount}
               size="md"
               showDiscountBadge={false}
+              isDark={true}
             />
           </div>
 
