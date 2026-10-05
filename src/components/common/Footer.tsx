@@ -143,7 +143,7 @@ export const Footer: React.FC = () => {
           </div>
 
           <a
-            href="https://codemario.com"
+            href="https://codemarioinfotech.com/"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-extrabold text-xs sm:text-sm rounded-2xl shadow-lg hover:shadow-indigo-500/25 transition-all shrink-0"
