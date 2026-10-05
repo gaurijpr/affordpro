@@ -133,20 +133,28 @@ export const getCustomCreatedProducts = (): Product[] => {
 export const mergeProducts = (apiProds: Product[], mockProds: Product[]): Product[] => {
   const custom = getCustomCreatedProducts();
 
-  // Create lookup maps for custom products by id, slug, and normalized title
+  // 1. Create lookup maps for custom products by id, slug, and normalized title
   const customById = new Map<string, Product>();
   const customBySlug = new Map<string, Product>();
   const customByTitle = new Map<string, Product>();
 
   custom.forEach((cp) => {
-    if (cp.id) customById.set(cp.id, cp);
-    if (cp.slug) customBySlug.set(cp.slug, cp);
-    if (cp.title) customByTitle.set(cp.title.toLowerCase().replace(/[^a-z0-9]+/g, ''), cp);
+    if (cp && cp.id) customById.set(cp.id, cp);
+    if (cp && cp.slug) customBySlug.set(cp.slug, cp);
+    if (cp && cp.title) {
+      const norm = cp.title.toLowerCase().replace(/[^a-z0-9]+/g, '');
+      if (norm) customByTitle.set(norm, cp);
+    }
   });
 
+  // 2. Process API products
   const processedApi: Product[] = (apiProds || []).map((ap) => {
+    if (!ap) return ap;
     const normTitle = (ap.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
-    const customMatch = customById.get(ap.id) || (ap.slug ? customBySlug.get(ap.slug) : null) || customByTitle.get(normTitle);
+    const customMatch =
+      customById.get(ap.id) ||
+      (ap.slug ? customBySlug.get(ap.slug) : null) ||
+      (normTitle ? customByTitle.get(normTitle) : null);
 
     if (customMatch) {
       return customMatch;
@@ -163,25 +171,44 @@ export const mergeProducts = (apiProds: Product[], mockProds: Product[]): Produc
     };
   });
 
-  const merged: Product[] = [...custom, ...processedApi];
+  // 3. Process Mock products
+  const processedMock: Product[] = (mockProds || []).map((mp) => {
+    if (!mp) return mp;
+    const normTitle = (mp.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+    const customMatch =
+      customById.get(mp.id) ||
+      (mp.slug ? customBySlug.get(mp.slug) : null) ||
+      (normTitle ? customByTitle.get(normTitle) : null);
+
+    if (customMatch) {
+      return customMatch;
+    }
+
+    const rawImages = mp.images || [];
+    const genericPlaceholder = 'photo-1618005182384-a83a8bd57fbe';
+    const hasValidImg = rawImages.length > 0 && rawImages[0] && !rawImages[0].includes(genericPlaceholder);
+    const primaryImg = hasValidImg ? rawImages[0] : getCategoryFallbackImage(mp);
+
+    return {
+      ...mp,
+      images: [primaryImg, ...(rawImages.length > 1 ? rawImages.slice(1) : [])],
+    };
+  });
+
+  // 4. Combine all (Custom first, then Processed API, then Processed Mock)
+  const allCandidates: Product[] = [...custom, ...processedApi, ...processedMock];
+
   const seenIds = new Set<string>();
   const seenSlugs = new Set<string>();
-  const seenTitles = new Set<string>();
   const uniqueMerged: Product[] = [];
 
-  merged.forEach((p) => {
+  allCandidates.forEach((p) => {
     if (!p || !p.id) return;
-    const normTitle = (p.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
-    const normSlug = (p.slug || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+    const normSlug = p.slug ? p.slug.toLowerCase().replace(/[^a-z0-9]+/g, '') : '';
 
-    if (
-      !seenIds.has(p.id) &&
-      (!normSlug || !seenSlugs.has(normSlug)) &&
-      (!normTitle || !seenTitles.has(normTitle))
-    ) {
+    if (!seenIds.has(p.id) && (!normSlug || !seenSlugs.has(normSlug))) {
       seenIds.add(p.id);
       if (normSlug) seenSlugs.add(normSlug);
-      if (normTitle) seenTitles.add(normTitle);
       uniqueMerged.push(p);
     }
   });
