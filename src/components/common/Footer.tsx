@@ -127,18 +127,18 @@ export const Footer: React.FC = () => {
 
         {/* Main Parent Agency Announcement & Service Inquiry Box */}
         <div className="my-10 p-6 bg-gradient-to-r from-slate-900 via-indigo-950/80 to-slate-900 border border-indigo-900/60 rounded-3xl shadow-xl space-y-4 sm:space-y-0 sm:flex sm:items-center sm:justify-between gap-6">
-          <div className="space-y-1.5 max-w-2xl">
+          <div className="space-y-2 max-w-3xl">
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-full">
-                Main Agency Notice
+                Main Agency & Official Trade Name
               </span>
               <span className="text-xs text-indigo-400 font-bold">• Codemario Infotech</span>
             </div>
-            <h3 className="text-base sm:text-lg font-black text-white">
-              Have a Custom Software, App, or Agency Service Query?
-            </h3>
             <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-medium">
-              <strong className="text-indigo-300">Codemario Infotech</strong> is our main official website. For any custom service inquiries, software development, or corporate agency queries, please contact us on our main website.
+              <strong className="text-indigo-300 font-bold">Codemario Infotech</strong> is our main official agency website and trade name. We provide AI Content & Automation, Meta & Google Ads, Social Media Management, Creative Design, Android App Development, AI Video & Creative Production, Website Development, and Custom Software Solutions.
+            </p>
+            <p className="text-xs sm:text-sm text-indigo-200 font-bold">
+              For custom projects, agency services, or corporate inquiries, please visit our official Codemario Infotech website.
             </p>
           </div>
 
