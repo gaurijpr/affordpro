@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, ShieldCheck, Globe, Video, Send, Share2 } from 'lucide-react';
+import { Sparkles, ShieldCheck, Globe, Video, Send, Share2, ExternalLink } from 'lucide-react';
 
 export const Footer: React.FC = () => {
   return (
@@ -125,9 +125,37 @@ export const Footer: React.FC = () => {
           </div>
         </div>
 
+        {/* Main Parent Agency Announcement & Service Inquiry Box */}
+        <div className="my-10 p-6 bg-gradient-to-r from-slate-900 via-indigo-950/80 to-slate-900 border border-indigo-900/60 rounded-3xl shadow-xl space-y-4 sm:space-y-0 sm:flex sm:items-center sm:justify-between gap-6">
+          <div className="space-y-1.5 max-w-2xl">
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-full">
+                Main Agency Notice
+              </span>
+              <span className="text-xs text-indigo-400 font-bold">• Codemario Infotech</span>
+            </div>
+            <h3 className="text-base sm:text-lg font-black text-white">
+              Have a Custom Software, App, or Agency Service Query?
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-medium">
+              <strong className="text-indigo-300">Codemario Infotech</strong> is our main official website. For any custom service inquiries, software development, or corporate agency queries, please contact us on our main website.
+            </p>
+          </div>
+
+          <a
+            href="https://codemario.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-extrabold text-xs sm:text-sm rounded-2xl shadow-lg hover:shadow-indigo-500/25 transition-all shrink-0"
+          >
+            <span>Visit Codemario Infotech</span>
+            <ExternalLink className="w-4 h-4" />
+          </a>
+        </div>
+
         {/* Bottom Bar */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-medium text-slate-500">
-          <p>© 2026 AffordPro. All rights reserved.</p>
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-medium text-slate-500 border-t border-slate-900">
+          <p>© 2026 AffordPro — Powered by Codemario Infotech. All rights reserved.</p>
           <div className="flex items-center gap-6">
             <span className="flex items-center gap-1">
               <ShieldCheck className="w-4 h-4 text-emerald-500" />
