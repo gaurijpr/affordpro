@@ -8,6 +8,7 @@ import { Modal } from '../components/ui/Modal';
 import { productService, getCategoryFallbackImage } from '../services/productService';
 import { categoryService } from '../services/categoryService';
 import { reviewService } from '../services/reviewService';
+import { testimonialService, TestimonialItem } from '../services/testimonialService';
 import { pageService, PageContent } from '../services/pageService';
 import { orderService } from '../services/orderService';
 import { API_BASE_URL } from '../services/api';
@@ -39,15 +40,116 @@ export const Admin: React.FC = () => {
   const [confirmAdminPassword, setConfirmAdminPassword] = useState('');
   const [isUpdatingCredentials, setIsUpdatingCredentials] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'categories' | 'orders' | 'new-product' | 'edit-product' | 'reviews' | 'pages' | 'credentials'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'categories' | 'orders' | 'new-product' | 'edit-product' | 'reviews' | 'creators' | 'pages' | 'credentials'>('overview');
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [allReviews, setAllReviews] = useState<Review[]>([]);
+  const [creatorTestimonials, setCreatorTestimonials] = useState<TestimonialItem[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [reviewSearch, setReviewSearch] = useState('');
   const [selectedReviewProduct, setSelectedReviewProduct] = useState<string>('ALL');
   const [orderSearch, setOrderSearch] = useState('');
   const [loading, setLoading] = useState(true);
+
+  // Dedicated Creator Say Review Management State
+  const [isCreatorModalOpen, setIsCreatorModalOpen] = useState(false);
+  const [editingCreator, setEditingCreator] = useState<TestimonialItem | null>(null);
+  const [creatorName, setCreatorName] = useState('');
+  const [creatorRole, setCreatorRole] = useState('');
+  const [creatorAvatar, setCreatorAvatar] = useState('');
+  const [creatorRating, setCreatorRating] = useState('5');
+  const [creatorTitle, setCreatorTitle] = useState('');
+  const [creatorComment, setCreatorComment] = useState('');
+  const [isSubmittingCreator, setIsSubmittingCreator] = useState(false);
+
+  const openAddCreatorModal = () => {
+    setEditingCreator(null);
+    setCreatorName('');
+    setCreatorRole('Content Creator & SMM');
+    setCreatorAvatar('');
+    setCreatorRating('5');
+    setCreatorTitle('');
+    setCreatorComment('');
+    setIsCreatorModalOpen(true);
+  };
+
+  const openEditCreatorModal = (item: TestimonialItem) => {
+    setEditingCreator(item);
+    setCreatorName(item.userName);
+    setCreatorRole(item.role || 'Content Creator');
+    setCreatorAvatar(item.avatar || '');
+    setCreatorRating(String(item.rating || 5));
+    setCreatorTitle(item.title || '');
+    setCreatorComment(item.comment || '');
+    setIsCreatorModalOpen(true);
+  };
+
+  const handleCreatorAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const compressed = await compressImage(file, 400, 400, 0.85);
+      setCreatorAvatar(compressed);
+      showToast('Creator photo uploaded successfully!', 'success');
+    } catch {
+      showToast('Failed to upload photo', 'error');
+    }
+  };
+
+  const handleCreatorSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!creatorName.trim() || !creatorComment.trim()) {
+      showToast('Please enter Creator Name and Review Comment', 'error');
+      return;
+    }
+
+    setIsSubmittingCreator(true);
+    try {
+      const payload = {
+        userName: creatorName.trim(),
+        role: creatorRole.trim() || 'Content Creator',
+        avatar: creatorAvatar || undefined,
+        rating: Number(creatorRating) || 5,
+        title: creatorTitle.trim() || 'Great Digital Asset',
+        comment: creatorComment.trim(),
+        verifiedPurchase: true,
+        active: true,
+      };
+
+      if (editingCreator) {
+        await testimonialService.updateTestimonial(editingCreator.id, payload);
+        setCreatorTestimonials((prev) =>
+          prev.map((item) => (item.id === editingCreator.id ? { ...item, ...payload } : item))
+        );
+        showToast(`Updated Creator Review for "${creatorName}"!`, 'success');
+      } else {
+        const created = await testimonialService.createTestimonial(payload);
+        setCreatorTestimonials((prev) => [created, ...prev]);
+        showToast(`Added new Creator Review for "${creatorName}"!`, 'success');
+      }
+
+      setIsCreatorModalOpen(false);
+    } catch (err: any) {
+      showToast(err.message || 'Failed to save creator review', 'error');
+    } finally {
+      setIsSubmittingCreator(false);
+    }
+  };
+
+  const handleDeleteCreator = async (item: TestimonialItem) => {
+    if (!window.confirm(`Are you sure you want to delete the Creator Review by "${item.userName}"?`)) {
+      return;
+    }
+
+    try {
+      await testimonialService.deleteTestimonial(item.id);
+      setCreatorTestimonials((prev) => prev.filter((i) => i.id !== item.id));
+      showToast(`Deleted Creator Review by "${item.userName}"`, 'success');
+      if (isCreatorModalOpen) setIsCreatorModalOpen(false);
+    } catch {
+      showToast('Failed to delete creator review', 'error');
+    }
+  };
 
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -408,16 +510,18 @@ export const Admin: React.FC = () => {
   const fetchAdminData = async () => {
     try {
       setLoading(true);
-      const [prods, cats, revs, ords] = await Promise.all([
+      const [prods, cats, revs, ords, creators] = await Promise.all([
         productService.getProducts(),
         categoryService.getCategories(),
         reviewService.getAllReviews(),
         orderService.getAllOrders(),
+        testimonialService.getTestimonials(50),
       ]);
       setProducts(prods);
       setCategories(cats);
       setAllReviews(revs);
       setOrders(ords);
+      setCreatorTestimonials(creators);
       if (cats.length > 0) setNewCategory(cats[0].slug);
     } catch (err) {
       console.error(err);
@@ -893,6 +997,16 @@ export const Admin: React.FC = () => {
         >
           <Star className="w-4 h-4" />
           <span>Customer Reviews ({allReviews.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('creators')}
+          className={`px-4 py-2.5 rounded-xl font-extrabold text-xs transition-colors flex items-center gap-2 whitespace-nowrap ${
+            activeTab === 'creators' ? 'bg-purple-600 text-white shadow-md' : 'bg-purple-50 text-purple-800 hover:bg-purple-100'
+          }`}
+        >
+          <Sparkles className="w-4 h-4" />
+          <span>What Our Creators Say ({creatorTestimonials.length})</span>
         </button>
 
         <button
@@ -2220,6 +2334,88 @@ export const Admin: React.FC = () => {
         </div>
       )}
 
+      {/* TAB: DEDICATED WHAT OUR CREATORS SAY MANAGER TAB */}
+      {activeTab === 'creators' && (
+        <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 card-shadow space-y-6">
+          <div className="flex items-center justify-between flex-wrap gap-4 border-b border-slate-100 pb-5">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 bg-purple-50 text-purple-700 font-extrabold text-[10px] uppercase rounded-md border border-purple-100">
+                  FEATURED CREATOR TESTIMONIALS CMS
+                </span>
+              </div>
+              <h2 className="text-2xl font-black text-slate-900 mt-1">What Our Creators Say ({creatorTestimonials.length})</h2>
+              <p className="text-slate-500 text-xs mt-0.5">
+                Manage the 10 featured creator reviews shown in the homepage horizontal scroll carousel with photo upload
+              </p>
+            </div>
+
+            <Button
+              onClick={openAddCreatorModal}
+              variant="primary"
+              size="md"
+              leftIcon={<Plus className="w-4 h-4" />}
+            >
+              Add New Creator Review
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {creatorTestimonials.map((item) => (
+              <div key={item.id} className="p-5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between space-y-4 hover:border-purple-300 transition-colors">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-amber-500 font-extrabold text-xs flex items-center gap-1">
+                      ★ {item.rating} / 5
+                    </span>
+                    <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-200">
+                      Verified Buyer
+                    </span>
+                  </div>
+                  {item.title && <h4 className="font-extrabold text-slate-900 text-xs tracking-tight">{item.title}</h4>}
+                  <p className="text-slate-600 text-xs leading-relaxed italic">"{item.comment}"</p>
+                </div>
+
+                <div className="flex items-center justify-between pt-3 border-t border-slate-200">
+                  <div className="flex items-center gap-3">
+                    {item.avatar ? (
+                      <img src={item.avatar} alt="" className="w-10 h-10 rounded-full object-cover border border-purple-200 shadow-xs shrink-0" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-600 to-purple-600 text-white font-black text-xs flex items-center justify-center border border-purple-200 shadow-xs shrink-0">
+                        {item.userName.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div>
+                      <h4 className="font-black text-slate-900 text-xs">{item.userName}</h4>
+                      <p className="text-slate-400 text-[11px] font-semibold">{item.role || 'Content Creator'}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => openEditCreatorModal(item)}
+                      className="p-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl font-bold text-xs transition-colors border border-indigo-100"
+                      title="Edit Creator Review"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteCreator(item)}
+                      className="p-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl font-bold text-xs transition-colors border border-rose-100"
+                      title="Delete Creator Review"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* TAB 6: CMS SITE PAGES & LEGAL POLICY MANAGER TAB */}
       {activeTab === 'pages' && (
         <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 card-shadow space-y-8">
@@ -2604,6 +2800,140 @@ export const Admin: React.FC = () => {
                 size="sm"
               >
                 Save Review Changes
+              </Button>
+            </div>
+          </div>
+        </form>
+      </Modal>
+      {/* Add / Edit What Our Creators Say Modal with Photo Upload */}
+      <Modal
+        isOpen={isCreatorModalOpen}
+        onClose={() => setIsCreatorModalOpen(false)}
+        title={editingCreator ? `Edit Creator Review: "${editingCreator.userName}"` : 'Add New Creator Review to Homepage'}
+      >
+        <form onSubmit={handleCreatorSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Creator / Buyer Name *</label>
+              <input
+                type="text"
+                required
+                value={creatorName}
+                onChange={(e) => setCreatorName(e.target.value)}
+                placeholder="e.g. Priya Sharma"
+                className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-600"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Role / Designation *</label>
+              <input
+                type="text"
+                required
+                value={creatorRole}
+                onChange={(e) => setCreatorRole(e.target.value)}
+                placeholder="e.g. Content Creator & SMM"
+                className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-600"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">Creator Photo Upload (Optional Image)</label>
+            <div className="flex items-center gap-4 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+              {creatorAvatar ? (
+                <img src={creatorAvatar} alt="" className="w-12 h-12 rounded-full object-cover border border-purple-300 shadow-xs shrink-0" />
+              ) : (
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-600 to-purple-600 text-white font-black text-xs flex items-center justify-center border border-purple-200 shadow-xs shrink-0">
+                  {creatorName ? creatorName.charAt(0).toUpperCase() : 'C'}
+                </div>
+              )}
+              <div className="flex-1 space-y-1">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleCreatorAvatarUpload}
+                  className="block w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-extrabold file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200 cursor-pointer"
+                />
+                <p className="text-[10px] text-slate-400">Or paste image photo URL below:</p>
+                <input
+                  type="text"
+                  value={creatorAvatar}
+                  onChange={(e) => setCreatorAvatar(e.target.value)}
+                  placeholder="https://images.unsplash.com/..."
+                  className="w-full px-3 py-1.5 text-[11px] font-mono bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-600"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Star Rating *</label>
+              <select
+                value={creatorRating}
+                onChange={(e) => setCreatorRating(e.target.value)}
+                className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-600"
+              >
+                <option value="5">5 Stars (★★★★★)</option>
+                <option value="4">4 Stars (★★★★☆)</option>
+                <option value="3">3 Stars (★★★☆☆)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Headline / Highlight *</label>
+              <input
+                type="text"
+                required
+                value={creatorTitle}
+                onChange={(e) => setCreatorTitle(e.target.value)}
+                placeholder="e.g. Gained 45k followers in 30 days!"
+                className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-600"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">Review Comment / Quote *</label>
+            <textarea
+              required
+              value={creatorComment}
+              onChange={(e) => setCreatorComment(e.target.value)}
+              rows={3}
+              placeholder="Full creator feedback comment..."
+              className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-600"
+            />
+          </div>
+
+          <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+            {editingCreator ? (
+              <button
+                type="button"
+                onClick={() => handleDeleteCreator(editingCreator)}
+                className="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl font-extrabold text-xs inline-flex items-center gap-1.5 transition-colors border border-rose-100"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Delete</span>
+              </button>
+            ) : <div />}
+
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                onClick={() => setIsCreatorModalOpen(false)}
+                variant="ghost"
+                size="sm"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                size="sm"
+                isLoading={isSubmittingCreator}
+              >
+                {editingCreator ? 'Update Review' : 'Add Creator Review'}
               </Button>
             </div>
           </div>

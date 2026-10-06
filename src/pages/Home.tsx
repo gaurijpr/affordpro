@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   ArrowRight, Sparkles, Zap, ShieldCheck, Download, Award, CheckCircle, Flame, Star, 
-  ChevronDown, HelpCircle, Users, DownloadCloud, Lock, FileCheck, Headphones, Check, Layers
+  ChevronDown, ChevronLeft, ChevronRight, HelpCircle, Users, DownloadCloud, Lock, FileCheck, Headphones, Check, Layers
 } from 'lucide-react';
 import { productService } from '../services/productService';
 import { reviewService } from '../services/reviewService';
+import { testimonialService } from '../services/testimonialService';
 import { Product } from '../types/product';
 import { ProductCard } from '../components/product/ProductCard';
 import { ServiceCard } from '../components/service/ServiceCard';
@@ -19,6 +20,15 @@ export const Home: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isLaunching, setIsLaunching] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+
+  const carouselRef = useRef<HTMLDivElement>(null);
+
+  const scrollCarousel = (direction: 'left' | 'right') => {
+    if (carouselRef.current) {
+      const scrollAmount = direction === 'left' ? -350 : 350;
+      carouselRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
 
   const handleRocketClick = () => {
     if (isLaunching) return;
@@ -75,7 +85,7 @@ export const Home: React.FC = () => {
           productService.getBestSellers(),
           productService.getProducts(),
           productService.getServices(),
-          reviewService.getFeaturedReviews(10),
+          testimonialService.getTestimonials(10),
         ]);
         setBestSellers(bestData);
         setAllProducts(allData);
@@ -545,43 +555,82 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* 8. VERIFIED CUSTOMER REVIEWS SHOWCASE */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
-        <div className="text-center space-y-2 max-w-2xl mx-auto">
-          <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 font-extrabold text-xs">
-            <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
-            <span>VERIFIED BUYER FEEDBACK</span>
+      {/* 8. VERIFIED CUSTOMER REVIEWS SHOWCASE - 5 Visible at once, Horizontal Scroll Slider */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="space-y-1 text-center sm:text-left">
+            <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 font-extrabold text-xs">
+              <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
+              <span>VERIFIED BUYER FEEDBACK (10 REVIEWS)</span>
+            </div>
+            <h2 className="text-3xl font-black text-slate-900">What Our Creators Say</h2>
+            <p className="text-slate-500 text-xs">Showing 5 reviews at once. Scroll right or left to explore all 10 creator reviews.</p>
           </div>
-          <h2 className="text-3xl font-black text-slate-900">What Our Creators Say</h2>
-          <p className="text-slate-500 text-sm">Join thousands of happy creators achieving 4X faster growth.</p>
+
+          {/* Carousel Scroll Buttons */}
+          <div className="flex items-center gap-2 shrink-0 select-none">
+            <button
+              type="button"
+              onClick={() => scrollCarousel('left')}
+              className="p-3 rounded-2xl bg-white border border-slate-200 shadow-sm hover:bg-slate-50 text-slate-700 hover:text-indigo-600 transition-colors"
+              aria-label="Scroll left"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollCarousel('right')}
+              className="p-3 rounded-2xl bg-white border border-slate-200 shadow-sm hover:bg-slate-50 text-slate-700 hover:text-indigo-600 transition-colors"
+              aria-label="Scroll right"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Horizontal Carousel Container: Showing 5 reviews visible at a time on lg screens */}
+        <div
+          ref={carouselRef}
+          className="flex overflow-x-auto gap-4 py-3 px-1 scroll-smooth snap-x snap-mandatory"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
           {creatorReviews.slice(0, 10).map((item, idx) => (
-            <div key={item.id || idx} className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm space-y-4 hover:border-indigo-300 transition-colors flex flex-col justify-between">
-              <div className="space-y-3">
+            <div
+              key={item.id || idx}
+              className="min-w-[270px] sm:min-w-[300px] lg:min-w-[calc(20%-13px)] max-w-[310px] bg-white p-5 rounded-3xl border border-slate-200/90 shadow-sm space-y-3 hover:border-indigo-300 hover:shadow-md transition-all flex flex-col justify-between shrink-0 snap-start"
+            >
+              <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1 text-amber-500">
                     {[...Array(item.rating || 5)].map((_, i) => (
-                      <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
+                      <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                     ))}
                   </div>
-                  <span className="text-[10px] font-extrabold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
-                    <Check className="w-3 h-3" /> Verified Buyer
+                  <span className="text-[9px] font-extrabold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-0.5">
+                    <Check className="w-2.5 h-2.5" /> Verified
                   </span>
                 </div>
                 {item.title && (
                   <h4 className="font-extrabold text-slate-900 text-xs tracking-tight line-clamp-1">{item.title}</h4>
                 )}
-                <p className="text-slate-600 text-xs leading-relaxed italic">"{item.comment || item.text}"</p>
+                <p className="text-slate-600 text-xs leading-relaxed italic line-clamp-3">"{item.comment || item.text}"</p>
               </div>
+
               <div className="flex items-center gap-3 pt-3 border-t border-slate-100">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 text-white font-black text-xs flex items-center justify-center border border-indigo-200 shadow-xs shrink-0 select-none">
-                  {(item.userName || item.name || 'C').charAt(0).toUpperCase()}
-                </div>
-                <div>
-                  <h4 className="font-black text-slate-900 text-xs">{item.userName || item.name}</h4>
-                  <p className="text-slate-400 text-[11px] font-semibold">{item.role || item.date || 'Verified Creator'}</p>
+                {item.avatar ? (
+                  <img
+                    src={item.avatar}
+                    alt={item.userName || item.name}
+                    className="w-10 h-10 rounded-full object-cover border border-indigo-100 shadow-xs shrink-0"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 text-white font-black text-xs flex items-center justify-center border border-indigo-200 shadow-xs shrink-0 select-none">
+                    {(item.userName || item.name || 'C').charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <h4 className="font-black text-slate-900 text-xs truncate">{item.userName || item.name}</h4>
+                  <p className="text-slate-400 text-[11px] font-semibold truncate">{item.role || item.date || 'Verified Creator'}</p>
                 </div>
               </div>
             </div>

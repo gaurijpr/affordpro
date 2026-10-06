@@ -13,6 +13,7 @@ import orderRoutes from './routes/orderRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
 import couponRoutes from './routes/couponRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
+import testimonialRoutes from './routes/testimonialRoutes.js';
 import downloadRoutes from './routes/downloadRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 
@@ -83,6 +84,7 @@ app.use('/api/v1/payment', paymentRoutes);
 app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/coupons', couponRoutes);
 app.use('/api/v1/reviews', reviewRoutes);
+app.use('/api/v1/testimonials', testimonialRoutes);
 app.use('/api/v1/downloads', downloadRoutes);
 app.use('/api/v1/admin', adminRoutes);
 
