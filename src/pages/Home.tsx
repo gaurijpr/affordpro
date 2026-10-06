@@ -605,7 +605,7 @@ export const Home: React.FC = () => {
               <img
                 src={item.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80'}
                 alt={item.userName || item.name}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700"
               />
 
               {/* Verified Rating Star Badge in Top Left */}
@@ -702,14 +702,24 @@ export const Home: React.FC = () => {
                 )}
               </div>
             ) : (
-              <div className="relative aspect-video bg-slate-950 overflow-hidden border-y border-slate-800">
+              <div className="relative min-h-[300px] max-h-[400px] bg-slate-950 flex items-center justify-center overflow-hidden border-y border-slate-800 p-2">
+                {/* Ambient Blurred Background Glow */}
                 <img
                   src={activeVideo.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80'}
                   alt=""
-                  className="w-full h-full object-cover opacity-80"
+                  aria-hidden="true"
+                  className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-40 scale-125 select-none"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent" />
-                <div className="absolute bottom-3 left-4 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-slate-900/60" />
+
+                {/* Foreground Full Uncropped Photo */}
+                <img
+                  src={activeVideo.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80'}
+                  alt={activeVideo.userName || activeVideo.name}
+                  className="relative z-10 max-h-[360px] w-auto max-w-full object-contain rounded-2xl shadow-2xl border border-white/10"
+                />
+
+                <div className="absolute bottom-3 left-4 z-20 bg-emerald-500/30 backdrop-blur-md text-emerald-300 border border-emerald-400/40 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider shadow-md">
                   ✓ Verified Buyer Review
                 </div>
               </div>
