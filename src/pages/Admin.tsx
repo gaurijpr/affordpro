@@ -1632,9 +1632,14 @@ export const Admin: React.FC = () => {
 
             {/* Product Image Selection & Desktop Upload */}
             <div className="space-y-2">
-              <label className="block text-xs font-bold text-slate-700">Product Thumbnail / Image *</label>
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <label className="block text-xs font-bold text-slate-700">Product Thumbnail / Image *</label>
+                <span className="text-[11px] bg-indigo-50 text-indigo-700 font-extrabold px-2.5 py-0.5 rounded-full border border-indigo-200">
+                  📐 Recommended: 1280 × 720 px (16:9 Landscape) or 1000 × 1000 px (1:1 Square)
+                </span>
+              </div>
 
-              <div className="p-5 bg-slate-50 border-2 border-dashed border-slate-300 hover:border-indigo-500 rounded-2xl transition-colors text-center space-y-2">
+              <div className="p-5 bg-slate-50 border-2 border-dashed border-slate-300 hover:border-indigo-500 rounded-2xl transition-colors text-center space-y-2.5">
                 <input
                   type="file"
                   id="desktop-image-upload"
@@ -1661,7 +1666,17 @@ export const Admin: React.FC = () => {
                   <Plus className="w-4 h-4" />
                   <span>Upload Image from Desktop Gallery</span>
                 </label>
+
                 <p className="text-[11px] text-slate-500 font-semibold">Or enter image web URL below</p>
+
+                <div className="text-[11px] text-indigo-900 bg-indigo-50/80 p-2.5 rounded-xl border border-indigo-100 font-medium text-left">
+                  💡 <strong>Best Pixel Sizes for Frontend Display:</strong>
+                  <ul className="list-disc list-inside mt-1 space-y-0.5 text-[10.5px] text-indigo-800 font-semibold">
+                    <li><strong>1280 × 720 pixels</strong> (16:9 Widescreen - Best for Digital Bundles & Courses)</li>
+                    <li><strong>1000 × 1000 pixels</strong> (1:1 Square - Best for Reels & Canva Templates)</li>
+                    <li><strong>Formats:</strong> JPG, PNG, WebP (Under 2 MB recommended)</li>
+                  </ul>
+                </div>
               </div>
 
               <input
@@ -1928,9 +1943,14 @@ export const Admin: React.FC = () => {
 
             {/* Edit Product Desktop Image Upload Gallery Picker */}
             <div className="space-y-2">
-              <label className="block text-xs font-bold text-slate-700">Product Thumbnail / Image *</label>
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <label className="block text-xs font-bold text-slate-700">Product Thumbnail / Image *</label>
+                <span className="text-[11px] bg-indigo-50 text-indigo-700 font-extrabold px-2.5 py-0.5 rounded-full border border-indigo-200">
+                  📐 Recommended: 1280 × 720 px (16:9 Landscape) or 1000 × 1000 px (1:1 Square)
+                </span>
+              </div>
 
-              <div className="p-5 bg-slate-50 border-2 border-dashed border-slate-300 hover:border-indigo-500 rounded-2xl transition-colors text-center space-y-2">
+              <div className="p-5 bg-slate-50 border-2 border-dashed border-slate-300 hover:border-indigo-500 rounded-2xl transition-colors text-center space-y-2.5">
                 <input
                   type="file"
                   id="edit-desktop-image-picker"
@@ -1957,7 +1977,17 @@ export const Admin: React.FC = () => {
                   <Plus className="w-4 h-4" />
                   <span>Upload Image from Desktop Gallery</span>
                 </label>
+
                 <p className="text-[11px] text-slate-500 font-semibold">Or enter image web URL below</p>
+
+                <div className="text-[11px] text-indigo-900 bg-indigo-50/80 p-2.5 rounded-xl border border-indigo-100 font-medium text-left">
+                  💡 <strong>Best Pixel Sizes for Frontend Display:</strong>
+                  <ul className="list-disc list-inside mt-1 space-y-0.5 text-[10.5px] text-indigo-800 font-semibold">
+                    <li><strong>1280 × 720 pixels</strong> (16:9 Widescreen - Best for Digital Bundles & Courses)</li>
+                    <li><strong>1000 × 1000 pixels</strong> (1:1 Square - Best for Reels & Canva Templates)</li>
+                    <li><strong>Formats:</strong> JPG, PNG, WebP (Under 2 MB recommended)</li>
+                  </ul>
+                </div>
               </div>
 
               <input
