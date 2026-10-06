@@ -162,7 +162,7 @@ export const getTestimonials = async (req: Request, res: Response): Promise<void
 // Create a new Creator Say testimonial (With Photo Upload support)
 export const createTestimonial = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { userName, role, avatar, rating, title, comment, verifiedPurchase, displayOrder } = req.body;
+    const { userName, role, avatar, videoUrl, rating, title, comment, verifiedPurchase, displayOrder } = req.body;
 
     if (!userName || !comment) {
       res.status(400).json({ success: false, message: 'Customer Name and Comment are required' });
@@ -174,6 +174,7 @@ export const createTestimonial = async (req: Request, res: Response): Promise<vo
         userName: userName.trim(),
         role: role ? role.trim() : 'Content Creator',
         avatar: avatar || undefined, // Photo URL or compressed base64 data URL
+        videoUrl: videoUrl ? videoUrl.trim() : undefined,
         rating: Number(rating) || 5,
         title: title ? title.trim() : 'Great Digital Assets',
         comment: comment.trim(),
@@ -197,7 +198,7 @@ export const createTestimonial = async (req: Request, res: Response): Promise<vo
 export const updateTestimonial = async (req: Request, res: Response): Promise<void> => {
   try {
     const id = (Array.isArray(req.params.id) ? req.params.id[0] : req.params.id) as string;
-    const { userName, role, avatar, rating, title, comment, verifiedPurchase, active, displayOrder } = req.body;
+    const { userName, role, avatar, videoUrl, rating, title, comment, verifiedPurchase, active, displayOrder } = req.body;
 
     const existing = await prisma.testimonial.findUnique({ where: { id } });
     if (!existing) {
@@ -211,6 +212,7 @@ export const updateTestimonial = async (req: Request, res: Response): Promise<vo
         ...(userName && { userName: userName.trim() }),
         ...(role !== undefined && { role: role.trim() }),
         ...(avatar !== undefined && { avatar }),
+        ...(videoUrl !== undefined && { videoUrl: videoUrl ? videoUrl.trim() : null }),
         ...(rating !== undefined && { rating: Number(rating) }),
         ...(title !== undefined && { title: title.trim() }),
         ...(comment !== undefined && { comment: comment.trim() }),

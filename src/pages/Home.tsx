@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   ArrowRight, Sparkles, Zap, ShieldCheck, Download, Award, CheckCircle, Flame, Star, 
-  ChevronDown, ChevronLeft, ChevronRight, HelpCircle, Users, DownloadCloud, Lock, FileCheck, Headphones, Check, Layers
+  ChevronDown, ChevronLeft, ChevronRight, HelpCircle, Users, DownloadCloud, Lock, FileCheck, Headphones, Check, Layers, Play, X
 } from 'lucide-react';
 import { productService } from '../services/productService';
 import { reviewService } from '../services/reviewService';
@@ -17,6 +17,7 @@ export const Home: React.FC = () => {
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [services, setServices] = useState<Product[]>([]);
   const [creatorReviews, setCreatorReviews] = useState<any[]>([]);
+  const [activeVideo, setActiveVideo] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [isLaunching, setIsLaunching] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
@@ -555,16 +556,16 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* 8. VERIFIED CUSTOMER REVIEWS SHOWCASE - 5 Visible at once, Horizontal Scroll Slider */}
+      {/* 8. VERIFIED CREATOR VIDEO REELS SHOWCASE - Vertical Card Layout matching user reference design */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="space-y-1 text-center sm:text-left">
             <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 font-extrabold text-xs">
               <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
-              <span>VERIFIED BUYER FEEDBACK (10 REVIEWS)</span>
+              <span>CREATOR VIDEO STORIES & BUYER REVIEWS</span>
             </div>
             <h2 className="text-3xl font-black text-slate-900">What Our Creators Say</h2>
-            <p className="text-slate-500 text-xs">Showing 5 reviews at once. Scroll right or left to explore all 10 creator reviews.</p>
+            <p className="text-slate-500 text-xs">Click play on any creator reel to watch their video story. Scroll right or left to explore all creators.</p>
           </div>
 
           {/* Carousel Scroll Buttons */}
@@ -588,55 +589,117 @@ export const Home: React.FC = () => {
           </div>
         </div>
 
-        {/* Horizontal Carousel Container: Showing 5 reviews visible at a time on lg screens */}
+        {/* Horizontal Scroll Container for Vertical Reel Cards */}
         <div
           ref={carouselRef}
-          className="flex overflow-x-auto gap-4 py-3 px-1 scroll-smooth snap-x snap-mandatory"
+          className="flex overflow-x-auto gap-4 py-4 px-1 scroll-smooth snap-x snap-mandatory items-center"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {creatorReviews.slice(0, 10).map((item, idx) => (
             <div
               key={item.id || idx}
-              className="min-w-[270px] sm:min-w-[300px] lg:min-w-[calc(20%-13px)] max-w-[310px] bg-white p-5 rounded-3xl border border-slate-200/90 shadow-sm space-y-3 hover:border-indigo-300 hover:shadow-md transition-all flex flex-col justify-between shrink-0 snap-start"
+              onClick={() => setActiveVideo(item)}
+              className="group relative min-w-[200px] sm:min-w-[220px] lg:min-w-[230px] h-[370px] sm:h-[400px] rounded-3xl overflow-hidden shadow-lg border border-slate-200/80 cursor-pointer snap-start transition-all transform hover:scale-[1.03] hover:shadow-2xl shrink-0"
             >
-              <div className="space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1 text-amber-500">
-                    {[...Array(item.rating || 5)].map((_, i) => (
-                      <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                    ))}
-                  </div>
-                  <span className="text-[9px] font-extrabold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-0.5">
-                    <Check className="w-2.5 h-2.5" /> Verified
-                  </span>
-                </div>
-                {item.title && (
-                  <h4 className="font-extrabold text-slate-900 text-xs tracking-tight line-clamp-1">{item.title}</h4>
-                )}
-                <p className="text-slate-600 text-xs leading-relaxed italic line-clamp-3">"{item.comment || item.text}"</p>
+              {/* Background Creator Photo */}
+              <img
+                src={item.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80'}
+                alt={item.userName || item.name}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+
+              {/* Gradient Overlay for Contrast */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/10" />
+
+              {/* Top-Right Play Button */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActiveVideo(item);
+                }}
+                className="absolute top-4 right-4 w-11 h-11 rounded-full bg-white/90 backdrop-blur-md text-slate-900 flex items-center justify-center shadow-xl group-hover:scale-110 group-hover:bg-white transition-transform"
+                aria-label="Play Creator Video"
+              >
+                <Play className="w-5 h-5 fill-slate-900 text-slate-900 ml-0.5" />
+              </button>
+
+              {/* Verified Star Badge */}
+              <div className="absolute top-4 left-4 bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/20 text-[10px] font-extrabold text-amber-300 flex items-center gap-1">
+                <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                <span>5.0</span>
               </div>
 
-              <div className="flex items-center gap-3 pt-3 border-t border-slate-100">
-                {item.avatar ? (
-                  <img
-                    src={item.avatar}
-                    alt={item.userName || item.name}
-                    className="w-10 h-10 rounded-full object-cover border border-indigo-100 shadow-xs shrink-0"
-                  />
-                ) : (
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 text-white font-black text-xs flex items-center justify-center border border-indigo-200 shadow-xs shrink-0 select-none">
-                    {(item.userName || item.name || 'C').charAt(0).toUpperCase()}
-                  </div>
-                )}
-                <div className="min-w-0">
-                  <h4 className="font-black text-slate-900 text-xs truncate">{item.userName || item.name}</h4>
-                  <p className="text-slate-400 text-[11px] font-semibold truncate">{item.role || item.date || 'Verified Creator'}</p>
+              {/* Optional Title / Review Comment Preview */}
+              {item.title && (
+                <div className="absolute bottom-14 left-4 right-4 text-white text-xs font-semibold line-clamp-2 drop-shadow-md">
+                  "{item.title}"
                 </div>
+              )}
+
+              {/* Bottom Orange Brush Badge with Creator Name */}
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-5 py-1.5 rounded-full bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white font-black text-sm shadow-xl shadow-orange-500/30 border border-amber-300/40 tracking-wide text-center whitespace-nowrap">
+                {item.userName || item.name}
               </div>
             </div>
           ))}
         </div>
       </section>
+
+      {/* VIDEO PLAYER MODAL OVERLAY */}
+      {activeVideo && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-fadeIn">
+          <div className="relative w-full max-w-sm sm:max-w-md bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl space-y-4">
+            {/* Modal Header */}
+            <div className="p-4 bg-slate-900/90 flex items-center justify-between border-b border-slate-800">
+              <div className="flex items-center gap-3">
+                <img
+                  src={activeVideo.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'}
+                  alt=""
+                  className="w-10 h-10 rounded-full object-cover border border-amber-400"
+                />
+                <div>
+                  <h4 className="font-black text-white text-sm">{activeVideo.userName || activeVideo.name}</h4>
+                  <p className="text-amber-400 text-xs font-semibold">{activeVideo.role || 'Verified Creator'}</p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setActiveVideo(null)}
+                className="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Video Player */}
+            <div className="relative aspect-[9/16] bg-black max-h-[480px] flex items-center justify-center overflow-hidden">
+              {activeVideo.videoUrl && (activeVideo.videoUrl.includes('youtube.com') || activeVideo.videoUrl.includes('youtu.be')) ? (
+                <iframe
+                  src={activeVideo.videoUrl.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
+                  title={activeVideo.userName}
+                  className="w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              ) : (
+                <video
+                  src={activeVideo.videoUrl || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4'}
+                  controls
+                  autoPlay
+                  className="w-full h-full object-cover"
+                />
+              )}
+            </div>
+
+            {/* Modal Review Text */}
+            <div className="p-4 bg-slate-900 text-slate-300 text-xs space-y-1">
+              <div className="font-extrabold text-white text-sm">"{activeVideo.title || 'Outstanding Digital Assets!'}"</div>
+              <p className="italic text-slate-400">{activeVideo.comment || activeVideo.text}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 9. FREQUENTLY ASKED QUESTIONS (FAQ ACCORDION) */}
       <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">

@@ -187,6 +187,7 @@ model Testimonial {
   userName         String
   role             String   @default("Content Creator")
   avatar           String?  // Base64 image or photo URL
+  videoUrl         String?  // Reel video URL or MP4 link
   rating           Int      @default(5)
   title            String
   comment          String

@@ -57,6 +57,7 @@ export const Admin: React.FC = () => {
   const [creatorName, setCreatorName] = useState('');
   const [creatorRole, setCreatorRole] = useState('');
   const [creatorAvatar, setCreatorAvatar] = useState('');
+  const [creatorVideoUrl, setCreatorVideoUrl] = useState('');
   const [creatorRating, setCreatorRating] = useState('5');
   const [creatorTitle, setCreatorTitle] = useState('');
   const [creatorComment, setCreatorComment] = useState('');
@@ -67,6 +68,7 @@ export const Admin: React.FC = () => {
     setCreatorName('');
     setCreatorRole('Content Creator & SMM');
     setCreatorAvatar('');
+    setCreatorVideoUrl('');
     setCreatorRating('5');
     setCreatorTitle('');
     setCreatorComment('');
@@ -78,6 +80,7 @@ export const Admin: React.FC = () => {
     setCreatorName(item.userName);
     setCreatorRole(item.role || 'Content Creator');
     setCreatorAvatar(item.avatar || '');
+    setCreatorVideoUrl(item.videoUrl || '');
     setCreatorRating(String(item.rating || 5));
     setCreatorTitle(item.title || '');
     setCreatorComment(item.comment || '');
@@ -109,6 +112,7 @@ export const Admin: React.FC = () => {
         userName: creatorName.trim(),
         role: creatorRole.trim() || 'Content Creator',
         avatar: creatorAvatar || undefined,
+        videoUrl: creatorVideoUrl.trim() || undefined,
         rating: Number(creatorRating) || 5,
         title: creatorTitle.trim() || 'Great Digital Asset',
         comment: creatorComment.trim(),
@@ -2894,6 +2898,17 @@ export const Admin: React.FC = () => {
                 />
               </div>
             </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">Reel Video URL (YouTube, MP4, Drive Link)</label>
+            <input
+              type="text"
+              value={creatorVideoUrl}
+              onChange={(e) => setCreatorVideoUrl(e.target.value)}
+              placeholder="e.g. https://commondatastorage.googleapis.com/... or https://youtube.com/watch?v=..."
+              className="w-full px-3.5 py-2.5 text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-600"
+            />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
