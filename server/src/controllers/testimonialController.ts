@@ -248,3 +248,13 @@ export const deleteTestimonial = async (req: Request, res: Response): Promise<vo
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// Delete ALL Creator Say testimonials
+export const deleteAllTestimonials = async (req: Request, res: Response): Promise<void> => {
+  try {
+    await prisma.testimonial.deleteMany({});
+    res.json({ success: true, message: 'All creator reviews deleted successfully' });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

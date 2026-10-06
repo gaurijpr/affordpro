@@ -151,6 +151,21 @@ export const Admin: React.FC = () => {
     }
   };
 
+  const handleDeleteAllCreators = async () => {
+    if (!window.confirm('⚠️ Are you sure you want to DELETE ALL creator reviews? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      await testimonialService.deleteAllTestimonials();
+      setCreatorTestimonials([]);
+      showToast('All creator reviews deleted successfully!', 'success');
+      if (isCreatorModalOpen) setIsCreatorModalOpen(false);
+    } catch {
+      showToast('Failed to delete all creator reviews', 'error');
+    }
+  };
+
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     const inputUser = adminLoginUsername.trim();
@@ -2350,14 +2365,28 @@ export const Admin: React.FC = () => {
               </p>
             </div>
 
-            <Button
-              onClick={openAddCreatorModal}
-              variant="primary"
-              size="md"
-              leftIcon={<Plus className="w-4 h-4" />}
-            >
-              Add New Creator Review
-            </Button>
+            <div className="flex items-center gap-3">
+              {creatorTestimonials.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleDeleteAllCreators}
+                  className="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs rounded-xl shadow-md transition-all flex items-center gap-1.5 shrink-0"
+                  title="Delete all creator reviews"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>Delete all</span>
+                </button>
+              )}
+
+              <Button
+                onClick={openAddCreatorModal}
+                variant="primary"
+                size="md"
+                leftIcon={<Plus className="w-4 h-4" />}
+              >
+                Add New Creator Review
+              </Button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

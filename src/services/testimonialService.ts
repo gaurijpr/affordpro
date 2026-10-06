@@ -123,9 +123,9 @@ export const testimonialService = {
   getLocalTestimonials(): TestimonialItem[] {
     try {
       const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (stored) {
+      if (stored !== null) {
         const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
           return parsed;
         }
       }
@@ -144,27 +144,29 @@ export const testimonialService = {
   },
 
   async getTestimonials(limit = 10): Promise<TestimonialItem[]> {
+    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (stored !== null) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          return parsed.slice(0, limit);
+        }
+      } catch {
+        // ignore
+      }
+    }
+
     try {
       const res = await fetchApi<{ success?: boolean; testimonials?: TestimonialItem[] }>(`/testimonials?limit=${limit}`);
-      if (res && res.testimonials && Array.isArray(res.testimonials) && res.testimonials.length > 0) {
-        let list = res.testimonials;
-        if (list.length < limit) {
-          const needed = limit - list.length;
-          list = [...list, ...DEFAULT_CREATOR_TESTIMONIALS.slice(0, needed)];
-        }
-        return list.slice(0, limit);
+      if (res && res.testimonials && Array.isArray(res.testimonials)) {
+        return res.testimonials.slice(0, limit);
       }
     } catch {
       // fallback
     }
 
     const local = this.getLocalTestimonials();
-    let combined = [...local];
-    if (combined.length < limit) {
-      const needed = limit - combined.length;
-      combined = [...combined, ...DEFAULT_CREATOR_TESTIMONIALS.slice(0, needed)];
-    }
-    return combined.slice(0, limit);
+    return local.slice(0, limit);
   },
 
   async createTestimonial(data: Omit<TestimonialItem, 'id'>): Promise<TestimonialItem> {
@@ -217,6 +219,20 @@ export const testimonialService = {
 
     try {
       await fetchApi(`/testimonials/${id}`, {
+        method: 'DELETE',
+      });
+    } catch {
+      // ignore
+    }
+
+    return true;
+  },
+
+  async deleteAllTestimonials(): Promise<boolean> {
+    this.saveLocalTestimonials([]);
+
+    try {
+      await fetchApi('/testimonials', {
         method: 'DELETE',
       });
     } catch {
