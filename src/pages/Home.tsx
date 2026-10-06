@@ -592,54 +592,47 @@ export const Home: React.FC = () => {
         {/* Horizontal Scroll Container for Vertical Reel Cards */}
         <div
           ref={carouselRef}
-          className="flex overflow-x-auto gap-4 py-4 px-1 scroll-smooth snap-x snap-mandatory items-center"
+          className="flex overflow-x-auto gap-4.5 py-4 px-1 scroll-smooth snap-x snap-mandatory items-center"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {creatorReviews.slice(0, 10).map((item, idx) => (
             <div
               key={item.id || idx}
               onClick={() => setActiveVideo(item)}
-              className="group relative min-w-[200px] sm:min-w-[220px] lg:min-w-[230px] h-[370px] sm:h-[400px] rounded-3xl overflow-hidden shadow-lg border border-slate-200/80 cursor-pointer snap-start transition-all transform hover:scale-[1.03] hover:shadow-2xl shrink-0"
+              className="group relative min-w-[230px] sm:min-w-[260px] lg:min-w-[270px] h-[400px] sm:h-[430px] rounded-3xl overflow-hidden shadow-xl border border-slate-200/90 cursor-pointer snap-start transition-all transform hover:scale-[1.02] hover:shadow-2xl shrink-0"
             >
               {/* Background Creator Photo */}
               <img
                 src={item.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80'}
                 alt={item.userName || item.name}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
               />
 
-              {/* Gradient Overlay for Contrast */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/10" />
-
-              {/* Top-Right Play Button */}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setActiveVideo(item);
-                }}
-                className="absolute top-4 right-4 w-11 h-11 rounded-full bg-white/90 backdrop-blur-md text-slate-900 flex items-center justify-center shadow-xl group-hover:scale-110 group-hover:bg-white transition-transform"
-                aria-label="Play Creator Video"
-              >
-                <Play className="w-5 h-5 fill-slate-900 text-slate-900 ml-0.5" />
-              </button>
-
-              {/* Verified Star Badge */}
-              <div className="absolute top-4 left-4 bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/20 text-[10px] font-extrabold text-amber-300 flex items-center gap-1">
+              {/* Verified Rating Star Badge in Top Left */}
+              <div className="absolute top-3.5 left-3.5 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/20 text-[10px] font-black text-amber-300 flex items-center gap-1.5 shadow-md">
                 <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
                 <span>5.0</span>
+                <span className="text-slate-300 font-normal">| Verified</span>
               </div>
 
-              {/* Optional Title / Review Comment Preview */}
-              {item.title && (
-                <div className="absolute bottom-14 left-4 right-4 text-white text-xs font-semibold line-clamp-2 drop-shadow-md">
-                  "{item.title}"
+              {/* Dark Gradient Overlay for Maximum Text Clarity */}
+              <div className="absolute inset-x-0 bottom-0 pt-16 pb-5 px-4 bg-gradient-to-t from-slate-950 via-slate-950/85 to-transparent backdrop-blur-[1px] flex flex-col justify-end space-y-2 text-left">
+                {/* 1. FIRST: User Name Badge */}
+                <div className="px-3.5 py-1 rounded-full bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white font-black text-xs shadow-lg shadow-orange-500/30 border border-amber-300/40 tracking-wide w-fit">
+                  {item.userName || item.name}
                 </div>
-              )}
 
-              {/* Bottom Orange Brush Badge with Creator Name */}
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-5 py-1.5 rounded-full bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white font-black text-sm shadow-xl shadow-orange-500/30 border border-amber-300/40 tracking-wide text-center whitespace-nowrap">
-                {item.userName || item.name}
+                {/* 2. SECOND: Highlight / Title */}
+                {item.title && (
+                  <h4 className="font-extrabold text-white text-xs sm:text-sm tracking-tight leading-snug drop-shadow-md line-clamp-2">
+                    {item.title}
+                  </h4>
+                )}
+
+                {/* 3. THIRD: Full Reviews / Comment */}
+                <p className="text-slate-200 text-xs leading-relaxed italic line-clamp-3 font-semibold drop-shadow-sm">
+                  "{item.comment || item.text}"
+                </p>
               </div>
             </div>
           ))}
