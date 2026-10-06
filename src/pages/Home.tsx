@@ -5,6 +5,7 @@ import {
   ChevronDown, HelpCircle, Users, DownloadCloud, Lock, FileCheck, Headphones, Check, Layers
 } from 'lucide-react';
 import { productService } from '../services/productService';
+import { reviewService } from '../services/reviewService';
 import { Product } from '../types/product';
 import { ProductCard } from '../components/product/ProductCard';
 import { ServiceCard } from '../components/service/ServiceCard';
@@ -14,6 +15,7 @@ export const Home: React.FC = () => {
   const [bestSellers, setBestSellers] = useState<Product[]>([]);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [services, setServices] = useState<Product[]>([]);
+  const [creatorReviews, setCreatorReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isLaunching, setIsLaunching] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
@@ -69,14 +71,16 @@ export const Home: React.FC = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [bestData, allData, serviceData] = await Promise.all([
+        const [bestData, allData, serviceData, reviewsData] = await Promise.all([
           productService.getBestSellers(),
           productService.getProducts(),
           productService.getServices(),
+          reviewService.getFeaturedReviews(10),
         ]);
         setBestSellers(bestData);
         setAllProducts(allData);
         setServices(serviceData);
+        setCreatorReviews(reviewsData);
       } catch (err) {
         console.error(err);
       } finally {
@@ -552,27 +556,32 @@ export const Home: React.FC = () => {
           <p className="text-slate-500 text-sm">Join thousands of happy creators achieving 4X faster growth.</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {testimonials.map((item, idx) => (
-            <div key={idx} className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm space-y-4 hover:border-indigo-300 transition-colors">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1 text-amber-500">
-                  {[...Array(item.rating)].map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
-                  ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {creatorReviews.slice(0, 10).map((item, idx) => (
+            <div key={item.id || idx} className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm space-y-4 hover:border-indigo-300 transition-colors flex flex-col justify-between">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1 text-amber-500">
+                    {[...Array(item.rating || 5)].map((_, i) => (
+                      <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
+                    ))}
+                  </div>
+                  <span className="text-[10px] font-extrabold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
+                    <Check className="w-3 h-3" /> Verified Buyer
+                  </span>
                 </div>
-                <span className="text-[10px] font-extrabold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
-                  <Check className="w-3 h-3" /> Verified Buyer
-                </span>
+                {item.title && (
+                  <h4 className="font-extrabold text-slate-900 text-xs tracking-tight line-clamp-1">{item.title}</h4>
+                )}
+                <p className="text-slate-600 text-xs leading-relaxed italic">"{item.comment || item.text}"</p>
               </div>
-              <p className="text-slate-600 text-xs leading-relaxed italic">"{item.text}"</p>
-              <div className="flex items-center gap-3 pt-2 border-t border-slate-100">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 text-white font-black text-xs flex items-center justify-center border border-indigo-200 shadow-xs shrink-0">
-                  {item.name.charAt(0).toUpperCase()}
+              <div className="flex items-center gap-3 pt-3 border-t border-slate-100">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 text-white font-black text-xs flex items-center justify-center border border-indigo-200 shadow-xs shrink-0 select-none">
+                  {(item.userName || item.name || 'C').charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <h4 className="font-black text-slate-900 text-xs">{item.name}</h4>
-                  <p className="text-slate-400 text-[11px] font-semibold">{item.role}</p>
+                  <h4 className="font-black text-slate-900 text-xs">{item.userName || item.name}</h4>
+                  <p className="text-slate-400 text-[11px] font-semibold">{item.role || item.date || 'Verified Creator'}</p>
                 </div>
               </div>
             </div>

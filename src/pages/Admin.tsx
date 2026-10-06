@@ -311,6 +311,56 @@ export const Admin: React.FC = () => {
   const [newUploadedReviews, setNewUploadedReviews] = useState<Review[] | null>(null);
   const [editUploadedReviews, setEditUploadedReviews] = useState<Review[] | null>(null);
 
+  // Individual Review Editing State
+  const [editingReview, setEditingReview] = useState<Review | null>(null);
+  const [isReviewEditModalOpen, setIsReviewEditModalOpen] = useState(false);
+  const [editReviewName, setEditReviewName] = useState('');
+  const [editReviewRating, setEditReviewRating] = useState('5');
+  const [editReviewTitle, setEditReviewTitle] = useState('');
+  const [editReviewComment, setEditReviewComment] = useState('');
+
+  const openEditReviewModal = (rev: Review) => {
+    setEditingReview(rev);
+    setEditReviewName(rev.userName);
+    setEditReviewRating(String(rev.rating));
+    setEditReviewTitle(rev.title);
+    setEditReviewComment(rev.comment);
+    setIsReviewEditModalOpen(true);
+  };
+
+  const handleSaveReviewEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingReview) return;
+
+    try {
+      await reviewService.updateReview(editingReview.id, {
+        userName: editReviewName,
+        rating: Number(editReviewRating) || 5,
+        title: editReviewTitle,
+        comment: editReviewComment,
+      });
+
+      setAllReviews((prev) =>
+        prev.map((r) =>
+          r.id === editingReview.id
+            ? {
+                ...r,
+                userName: editReviewName,
+                rating: Number(editReviewRating) || 5,
+                title: editReviewTitle,
+                comment: editReviewComment,
+              }
+            : r
+        )
+      );
+
+      setIsReviewEditModalOpen(false);
+      showToast(`Review by "${editReviewName}" updated successfully!`, 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to update review', 'error');
+    }
+  };
+
   const handleReviewsFileUpload = (e: React.ChangeEvent<HTMLInputElement>, isEditMode: boolean = false) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -2132,7 +2182,17 @@ export const Admin: React.FC = () => {
                         {rev.date || 'Verified Buyer'}
                       </td>
 
-                      <td className="p-3.5 text-right">
+                      <td className="p-3.5 text-right flex items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => openEditReviewModal(rev)}
+                          className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl font-extrabold text-[11px] inline-flex items-center gap-1 transition-colors border border-indigo-100 shadow-xs"
+                          title="Edit Customer Review"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                          <span>Edit</span>
+                        </button>
+
                         <button
                           type="button"
                           onClick={() => handleDeleteReview(rev)}
@@ -2140,7 +2200,7 @@ export const Admin: React.FC = () => {
                           title="Delete Customer Review"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
-                          <span>Delete Review</span>
+                          <span>Delete</span>
                         </button>
                       </td>
                     </tr>
@@ -2454,6 +2514,96 @@ export const Admin: React.FC = () => {
                 isLoading={isSubmittingCat}
               >
                 {editingCategory ? 'Update Category' : 'Create Category'}
+              </Button>
+            </div>
+          </div>
+        </form>
+      </Modal>
+      {/* Edit Customer Review Modal */}
+      <Modal
+        isOpen={isReviewEditModalOpen}
+        onClose={() => setIsReviewEditModalOpen(false)}
+        title={`Edit Customer Review by "${editReviewName}"`}
+      >
+        <form onSubmit={handleSaveReviewEdit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">Customer Name *</label>
+            <input
+              type="text"
+              required
+              value={editReviewName}
+              onChange={(e) => setEditReviewName(e.target.value)}
+              className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-600"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">Rating (1 to 5 Stars) *</label>
+            <select
+              value={editReviewRating}
+              onChange={(e) => setEditReviewRating(e.target.value)}
+              className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-600"
+            >
+              <option value="5">5 Stars (★★★★★)</option>
+              <option value="4">4 Stars (★★★★☆)</option>
+              <option value="3">3 Stars (★★★☆☆)</option>
+              <option value="2">2 Stars (★★☆☆☆)</option>
+              <option value="1">1 Star (★☆☆☆☆)</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">Review Headline / Title *</label>
+            <input
+              type="text"
+              required
+              value={editReviewTitle}
+              onChange={(e) => setEditReviewTitle(e.target.value)}
+              className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-600"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">Review Comment *</label>
+            <textarea
+              required
+              value={editReviewComment}
+              onChange={(e) => setEditReviewComment(e.target.value)}
+              rows={4}
+              className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-600"
+            />
+          </div>
+
+          <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+            {editingReview && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsReviewEditModalOpen(false);
+                  handleDeleteReview(editingReview);
+                }}
+                className="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl font-extrabold text-xs inline-flex items-center gap-1.5 transition-colors border border-rose-100"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Delete Review</span>
+              </button>
+            )}
+
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                onClick={() => setIsReviewEditModalOpen(false)}
+                variant="ghost"
+                size="sm"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                size="sm"
+              >
+                Save Review Changes
               </Button>
             </div>
           </div>

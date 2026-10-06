@@ -11,6 +11,7 @@ import {
   deleteAdminCategory,
   updateAdminCredentials,
 } from '../controllers/adminController.js';
+import { updateReview, deleteReview } from '../controllers/reviewController.js';
 import { authenticateJwt, requireAdmin } from '../middleware/auth.js';
 
 const router = Router();
@@ -34,5 +35,8 @@ router.delete('/categories/:id', deleteAdminCategory);
 
 router.get('/orders', getAdminOrders);
 router.patch('/orders/:id/status', updateAdminOrderStatus);
+
+router.put('/reviews/:id', updateReview);
+router.delete('/reviews/:id', deleteReview);
 
 export default router;

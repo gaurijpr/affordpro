@@ -5,16 +5,117 @@ import { safeSetLocalStorage } from './productService';
 
 const IN_MEMORY_CUSTOM_REVIEWS = new Map<string, Review[]>();
 
+const DEFAULT_CREATOR_REVIEWS: Review[] = [
+  {
+    id: 'rev-def-1',
+    productId: 'prod-1',
+    userName: 'Priya Sharma',
+    rating: 5,
+    title: 'Gained 45k followers in 30 days!',
+    comment: 'The 1000+ Viral Reels Bundle saved me hundreds of hours! Top notch video quality and 100% functional templates.',
+    verifiedPurchase: true,
+    date: '2026-03-15',
+  },
+  {
+    id: 'rev-def-2',
+    productId: 'prod-2',
+    userName: 'Rohan Verma',
+    rating: 5,
+    title: 'My secret vault for high-converting templates',
+    comment: 'AffordPro is my go-to store for Canva templates and marketing courses. Instant drive access right after payment!',
+    verifiedPurchase: true,
+    date: '2026-03-18',
+  },
+  {
+    id: 'rev-def-3',
+    productId: 'prod-3',
+    userName: 'Ananya Patel',
+    rating: 5,
+    title: 'Instant clarity & 100% working assets',
+    comment: 'Super easy to download and customize. The Meta ads course and prompt pack gave my business immediate sales momentum.',
+    verifiedPurchase: true,
+    date: '2026-03-22',
+  },
+  {
+    id: 'rev-def-4',
+    productId: 'prod-4',
+    userName: 'Vikram Mehta',
+    rating: 5,
+    title: 'Outstanding quality and lifetime access',
+    comment: 'The Canva bundle templates are super clean and easy to edit. Saved me so much time on client work!',
+    verifiedPurchase: true,
+    date: '2026-03-25',
+  },
+  {
+    id: 'rev-def-5',
+    productId: 'prod-5',
+    userName: 'Sneha Roy',
+    rating: 5,
+    title: 'Unbelievable value for creators',
+    comment: 'High engagement reel templates that boost reach naturally. My clients love the content generated from these bundles.',
+    verifiedPurchase: true,
+    date: '2026-03-28',
+  },
+  {
+    id: 'rev-def-6',
+    productId: 'prod-6',
+    userName: 'Karan Malhotra',
+    rating: 5,
+    title: 'ROAS increased dramatically',
+    comment: 'The ad templates and AI prompts are tailored for high conversion rates. Best digital investment this year.',
+    verifiedPurchase: true,
+    date: '2026-03-30',
+  },
+  {
+    id: 'rev-def-7',
+    productId: 'prod-7',
+    userName: 'Neha Gupta',
+    rating: 5,
+    title: 'Fast instant download & zero hassle',
+    comment: 'Got my download link right on screen and in my email. Templates work on free Canva accounts perfectly!',
+    verifiedPurchase: true,
+    date: '2026-04-01',
+  },
+  {
+    id: 'rev-def-8',
+    productId: 'prod-8',
+    userName: 'Rahul Deshmukh',
+    rating: 5,
+    title: 'Crisp 4K video clips & reels',
+    comment: 'Ready-made cartoon food & viral reel bundles are top quality. No watermarks, easy to use right away.',
+    verifiedPurchase: true,
+    date: '2026-04-02',
+  },
+  {
+    id: 'rev-def-9',
+    productId: 'prod-9',
+    userName: 'Pooja Nair',
+    rating: 5,
+    title: 'Extremely helpful 24/7 support',
+    comment: 'Had a quick question about unzipping files and support answered in 5 minutes. 100% recommended!',
+    verifiedPurchase: true,
+    date: '2026-04-03',
+  },
+  {
+    id: 'rev-def-10',
+    productId: 'prod-10',
+    userName: 'Amitav Sengupta',
+    rating: 5,
+    title: 'Complete digital ecosystem in one place',
+    comment: 'From e-books to Canva kits, AffordPro delivers genuine value. Will definitely purchase again!',
+    verifiedPurchase: true,
+    date: '2026-04-04',
+  },
+];
+
 export const reviewService = {
   getCustomReviews(idOrSlug: string): Review[] | null {
     if (!idOrSlug) return null;
 
-    // 1. Direct in-memory lookup
     if (IN_MEMORY_CUSTOM_REVIEWS.has(idOrSlug)) {
       return IN_MEMORY_CUSTOM_REVIEWS.get(idOrSlug)!;
     }
 
-    // Normalized search in in-memory map
     const norm = idOrSlug.toLowerCase().replace(/[^a-z0-9]+/g, '');
     if (norm) {
       for (const [key, list] of IN_MEMORY_CUSTOM_REVIEWS.entries()) {
@@ -25,19 +126,17 @@ export const reviewService = {
       }
     }
 
-    // 2. LocalStorage lookup
     try {
       const stored = localStorage.getItem(`affordpro_custom_reviews_${idOrSlug}`);
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const cleaned = parsed.map((r) => ({ ...r, userAvatar: undefined }));
+          const cleaned = parsed.map((r: Review) => ({ ...r, userAvatar: undefined }));
           IN_MEMORY_CUSTOM_REVIEWS.set(idOrSlug, cleaned);
           return cleaned;
         }
       }
 
-      // Fuzzy scan in localStorage keys
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (key && key.startsWith('affordpro_custom_reviews_')) {
@@ -48,7 +147,7 @@ export const reviewService = {
             if (item) {
               const parsed = JSON.parse(item);
               if (Array.isArray(parsed) && parsed.length > 0) {
-                const cleaned = parsed.map((r) => ({ ...r, userAvatar: undefined }));
+                const cleaned = parsed.map((r: Review) => ({ ...r, userAvatar: undefined }));
                 IN_MEMORY_CUSTOM_REVIEWS.set(idOrSlug, cleaned);
                 return cleaned;
               }
@@ -64,8 +163,7 @@ export const reviewService = {
 
   saveCustomReviews(id: string, slug: string | undefined, reviews: Review[]): void {
     if (!reviews || !reviews.length) return;
-    // Omit userAvatar as requested by user ("I didn't want any image in reviews")
-    const formatted = reviews.map((r, idx) => ({
+    const formatted: Review[] = reviews.map((r, idx) => ({
       id: r.id || `rev-custom-${id}-${idx}`,
       productId: id,
       userName: r.userName || `Verified Customer ${idx + 1}`,
@@ -74,10 +172,9 @@ export const reviewService = {
       comment: r.comment || r.title || 'High quality digital product!',
       date: r.date || 'Verified Buyer',
       verifiedPurchase: r.verifiedPurchase !== false,
-      userAvatar: undefined,
+      userAvatar: undefined, // No image in reviews as requested by user
     }));
 
-    // Cache in memory for instant retrieval
     if (id) IN_MEMORY_CUSTOM_REVIEWS.set(id, formatted);
     if (slug) IN_MEMORY_CUSTOM_REVIEWS.set(slug, formatted);
 
@@ -88,7 +185,6 @@ export const reviewService = {
       if (normSlug) IN_MEMORY_CUSTOM_REVIEWS.set(normSlug, formatted);
     }
 
-    // Save to localStorage safely
     try {
       const jsonStr = JSON.stringify(formatted);
       if (id) safeSetLocalStorage(`affordpro_custom_reviews_${id}`, jsonStr);
@@ -98,8 +194,41 @@ export const reviewService = {
     }
   },
 
+  // Get 10 reviews for homepage "What Our Creators Say" section
+  async getFeaturedReviews(limit = 10): Promise<(Review & { role?: string })[]> {
+    try {
+      const apiRevs = await fetchApi<Review[]>(`/reviews/featured?limit=${limit}`);
+      if (apiRevs && Array.isArray(apiRevs) && apiRevs.length > 0) {
+        const cleaned: (Review & { role?: string })[] = apiRevs.map((r) => ({
+          ...r,
+          userAvatar: undefined, // ensure no images
+          role: (r as any).role || 'Verified Creator',
+        }));
+
+        if (cleaned.length >= limit) {
+          return cleaned.slice(0, limit);
+        }
+        
+        const needed = limit - cleaned.length;
+        return [...cleaned, ...DEFAULT_CREATOR_REVIEWS.slice(0, needed)];
+      }
+    } catch {
+      // fallback
+    }
+
+    const allLocal = await this.getAllReviews();
+    const cleanedLocal: (Review & { role?: string })[] = allLocal.map((r) => ({ ...r, userAvatar: undefined }));
+    
+    let combined = [...cleanedLocal];
+    if (combined.length < limit) {
+      const needed = limit - combined.length;
+      combined = [...combined, ...DEFAULT_CREATOR_REVIEWS.slice(0, needed)];
+    }
+
+    return combined.slice(0, limit);
+  },
+
   async getProductReviews(productId: string, slug?: string): Promise<{ reviews: Review[]; isCustom: boolean }> {
-    // 1. Check local / memory custom reviews first
     const customById = this.getCustomReviews(productId);
     if (customById && customById.length > 0) {
       return { reviews: customById, isCustom: true };
@@ -111,7 +240,6 @@ export const reviewService = {
       }
     }
 
-    // 2. Fetch from API
     try {
       const apiRevs = await fetchApi<Review[]>(`/products/${productId}/reviews`);
       if (apiRevs && apiRevs.length > 0) {
@@ -122,7 +250,6 @@ export const reviewService = {
       // fallback
     }
 
-    // 3. Fallback mock reviews (with userAvatar removed)
     const rawMock = MOCK_REVIEWS[productId] || (slug ? MOCK_REVIEWS[slug] : null) || [];
     const mock = rawMock.map((r) => ({ ...r, userAvatar: undefined }));
     return { reviews: mock, isCustom: false };
@@ -138,9 +265,9 @@ export const reviewService = {
       comment: review.comment,
       date: new Date().toISOString().split('T')[0],
       verifiedPurchase: true,
+      userAvatar: undefined,
     };
 
-    // Add to custom reviews list if present
     const existingCustom = this.getCustomReviews(productId) || [];
     const updatedCustom = [newRev, ...existingCustom];
     this.saveCustomReviews(productId, undefined, updatedCustom);
@@ -157,11 +284,51 @@ export const reviewService = {
     return newRev;
   },
 
+  async updateReview(reviewId: string, updateData: Partial<Review>): Promise<boolean> {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('affordpro_custom_reviews_')) {
+        try {
+          const item = localStorage.getItem(key);
+          if (item) {
+            const parsed: Review[] = JSON.parse(item);
+            if (Array.isArray(parsed)) {
+              let updated = false;
+              const newList = parsed.map((r) => {
+                if (r.id === reviewId) {
+                  updated = true;
+                  return { ...r, ...updateData, userAvatar: undefined };
+                }
+                return r;
+              });
+
+              if (updated) {
+                localStorage.setItem(key, JSON.stringify(newList));
+              }
+            }
+          }
+        } catch {
+          // ignore
+        }
+      }
+    }
+
+    try {
+      await fetchApi(`/reviews/${reviewId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ ...updateData, userAvatar: undefined }),
+      });
+    } catch {
+      // ignore
+    }
+
+    return true;
+  },
+
   async getAllReviews(): Promise<(Review & { productTitle?: string })[]> {
     const all: (Review & { productTitle?: string })[] = [];
     const seenIds = new Set<string>();
 
-    // 1. Scan localStorage for custom / uploaded / user-submitted reviews
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (key && key.startsWith('affordpro_custom_reviews_')) {
@@ -173,7 +340,7 @@ export const reviewService = {
               parsed.forEach((r) => {
                 if (!seenIds.has(r.id)) {
                   seenIds.add(r.id);
-                  all.push(r);
+                  all.push({ ...r, userAvatar: undefined });
                 }
               });
             }
@@ -184,12 +351,25 @@ export const reviewService = {
       }
     }
 
-    // 2. Collect from MOCK_REVIEWS
+    try {
+      const apiRevs = await fetchApi<Review[]>('/reviews/featured?limit=50');
+      if (apiRevs && Array.isArray(apiRevs)) {
+        apiRevs.forEach((r) => {
+          if (!seenIds.has(r.id)) {
+            seenIds.add(r.id);
+            all.push({ ...r, userAvatar: undefined });
+          }
+        });
+      }
+    } catch {
+      // ignore
+    }
+
     Object.keys(MOCK_REVIEWS).forEach((prodId) => {
       MOCK_REVIEWS[prodId].forEach((r) => {
         if (!seenIds.has(r.id)) {
           seenIds.add(r.id);
-          all.push(r);
+          all.push({ ...r, userAvatar: undefined });
         }
       });
     });
@@ -198,7 +378,6 @@ export const reviewService = {
   },
 
   async deleteReview(reviewId: string, productId?: string): Promise<boolean> {
-    // 1. Update localStorage custom reviews
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (key && key.startsWith('affordpro_custom_reviews_')) {
@@ -223,7 +402,6 @@ export const reviewService = {
       }
     }
 
-    // 2. Remove from MOCK_REVIEWS
     if (productId && MOCK_REVIEWS[productId]) {
       MOCK_REVIEWS[productId] = MOCK_REVIEWS[productId].filter((r) => r.id !== reviewId);
     } else {
@@ -232,9 +410,8 @@ export const reviewService = {
       });
     }
 
-    // 3. Optional backend API call
     try {
-      await fetchApi(`/admin/reviews/${reviewId}`, { method: 'DELETE' });
+      await fetchApi(`/reviews/${reviewId}`, { method: 'DELETE' });
     } catch {
       // ignore
     }
