@@ -599,7 +599,7 @@ export const Home: React.FC = () => {
             <div
               key={item.id || idx}
               onClick={() => setActiveVideo(item)}
-              className="group relative min-w-[230px] sm:min-w-[260px] lg:min-w-[270px] h-[400px] sm:h-[430px] rounded-3xl overflow-hidden shadow-xl border border-slate-200/90 cursor-pointer snap-start transition-all transform hover:scale-[1.02] hover:shadow-2xl shrink-0"
+              className="group relative min-w-[230px] sm:min-w-[260px] lg:min-w-[270px] h-[400px] sm:h-[430px] rounded-3xl overflow-hidden shadow-xl border border-slate-200/90 cursor-pointer snap-start transition-all transform hover:scale-[1.02] hover:shadow-2xl shrink-0 select-none"
             >
               {/* Background Creator Photo */}
               <img
@@ -613,6 +613,11 @@ export const Home: React.FC = () => {
                 <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
                 <span>5.0</span>
                 <span className="text-slate-300 font-normal">| Verified</span>
+              </div>
+
+              {/* Top-Right Click Indicator Badge */}
+              <div className="absolute top-3.5 right-3.5 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/20 text-[10px] font-extrabold text-white group-hover:bg-amber-500 group-hover:border-amber-400 transition-all shadow-md">
+                View ↗
               </div>
 
               {/* Dark Gradient Overlay for Maximum Text Clarity */}
@@ -639,56 +644,88 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* VIDEO PLAYER MODAL OVERLAY */}
+      {/* FULL CREATOR REVIEW & VIDEO MODAL OVERLAY (Z-[9999]) */}
       {activeVideo && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-fadeIn">
-          <div className="relative w-full max-w-sm sm:max-w-md bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl space-y-4">
+        <div
+          onClick={() => setActiveVideo(null)}
+          className="fixed inset-0 z-[9999] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-fadeIn cursor-pointer"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl space-y-4 cursor-default text-left"
+          >
             {/* Modal Header */}
             <div className="p-4 bg-slate-900/90 flex items-center justify-between border-b border-slate-800">
               <div className="flex items-center gap-3">
                 <img
                   src={activeVideo.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'}
                   alt=""
-                  className="w-10 h-10 rounded-full object-cover border border-amber-400"
+                  className="w-11 h-11 rounded-full object-cover border-2 border-amber-400 shadow-md"
                 />
                 <div>
-                  <h4 className="font-black text-white text-sm">{activeVideo.userName || activeVideo.name}</h4>
-                  <p className="text-amber-400 text-xs font-semibold">{activeVideo.role || 'Verified Creator'}</p>
+                  <h4 className="font-black text-white text-base leading-snug">{activeVideo.userName || activeVideo.name}</h4>
+                  <p className="text-amber-400 text-xs font-bold flex items-center gap-1">
+                    <span>★ 5.0 / 5.0</span>
+                    <span className="text-slate-400 font-normal">• {activeVideo.role || 'Verified Creator'}</span>
+                  </p>
                 </div>
               </div>
 
               <button
+                type="button"
                 onClick={() => setActiveVideo(null)}
                 className="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition-colors"
+                aria-label="Close modal"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Video Player */}
-            <div className="relative aspect-[9/16] bg-black max-h-[480px] flex items-center justify-center overflow-hidden">
-              {activeVideo.videoUrl && (activeVideo.videoUrl.includes('youtube.com') || activeVideo.videoUrl.includes('youtu.be')) ? (
-                <iframe
-                  src={activeVideo.videoUrl.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
-                  title={activeVideo.userName}
-                  className="w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
+            {/* Video Player or HD Creator Photo Showcase */}
+            {activeVideo.videoUrl ? (
+              <div className="relative aspect-[9/16] bg-black max-h-[440px] flex items-center justify-center overflow-hidden">
+                {activeVideo.videoUrl.includes('youtube.com') || activeVideo.videoUrl.includes('youtu.be') ? (
+                  <iframe
+                    src={activeVideo.videoUrl.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
+                    title={activeVideo.userName}
+                    className="w-full h-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                ) : (
+                  <video
+                    src={activeVideo.videoUrl}
+                    controls
+                    autoPlay
+                    className="w-full h-full object-cover"
+                  />
+                )}
+              </div>
+            ) : (
+              <div className="relative aspect-video bg-slate-950 overflow-hidden border-y border-slate-800">
+                <img
+                  src={activeVideo.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80'}
+                  alt=""
+                  className="w-full h-full object-cover opacity-80"
                 />
-              ) : (
-                <video
-                  src={activeVideo.videoUrl || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4'}
-                  controls
-                  autoPlay
-                  className="w-full h-full object-cover"
-                />
-              )}
-            </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent" />
+                <div className="absolute bottom-3 left-4 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                  ✓ Verified Buyer Review
+                </div>
+              </div>
+            )}
 
-            {/* Modal Review Text */}
-            <div className="p-4 bg-slate-900 text-slate-300 text-xs space-y-1">
-              <div className="font-extrabold text-white text-sm">"{activeVideo.title || 'Outstanding Digital Assets!'}"</div>
-              <p className="italic text-slate-400">{activeVideo.comment || activeVideo.text}</p>
+            {/* Modal Review Full Details */}
+            <div className="p-5 bg-slate-900 text-slate-300 space-y-2">
+              <div className="inline-block px-3 py-1 bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-black rounded-lg">
+                {activeVideo.userName || activeVideo.name}
+              </div>
+              {activeVideo.title && (
+                <div className="font-black text-white text-base leading-snug">"{activeVideo.title}"</div>
+              )}
+              <p className="text-slate-300 text-xs leading-relaxed italic bg-slate-950/60 p-4 rounded-2xl border border-slate-800">
+                "{activeVideo.comment || activeVideo.text}"
+              </p>
             </div>
           </div>
         </div>
