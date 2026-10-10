@@ -133,6 +133,16 @@ export const testimonialService = {
   },
 
   async getTestimonials(limit = 10): Promise<TestimonialItem[]> {
+    try {
+      const res = await fetchApi<{ success?: boolean; testimonials?: TestimonialItem[] }>(`/testimonials?limit=${limit}`);
+      if (res && res.testimonials && Array.isArray(res.testimonials)) {
+        this.saveLocalTestimonials(res.testimonials);
+        return res.testimonials.slice(0, limit);
+      }
+    } catch (e) {
+      console.warn('Failed to fetch testimonials from API:', e);
+    }
+
     const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (stored !== null) {
       try {
@@ -143,15 +153,6 @@ export const testimonialService = {
       } catch {
         // ignore
       }
-    }
-
-    try {
-      const res = await fetchApi<{ success?: boolean; testimonials?: TestimonialItem[] }>(`/testimonials?limit=${limit}`);
-      if (res && res.testimonials && Array.isArray(res.testimonials)) {
-        return res.testimonials.slice(0, limit);
-      }
-    } catch {
-      // fallback
     }
 
     const local = this.getLocalTestimonials();

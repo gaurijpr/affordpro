@@ -198,19 +198,14 @@ export const reviewService = {
   async getFeaturedReviews(limit = 10): Promise<(Review & { role?: string })[]> {
     try {
       const apiRevs = await fetchApi<Review[]>(`/reviews/featured?limit=${limit}`);
-      if (apiRevs && Array.isArray(apiRevs) && apiRevs.length > 0) {
+      if (apiRevs && Array.isArray(apiRevs)) {
         const cleaned: (Review & { role?: string })[] = apiRevs.map((r) => ({
           ...r,
           userAvatar: undefined, // ensure no images
           role: (r as any).role || 'Verified Creator',
         }));
 
-        if (cleaned.length >= limit) {
-          return cleaned.slice(0, limit);
-        }
-        
-        const needed = limit - cleaned.length;
-        return [...cleaned, ...DEFAULT_CREATOR_REVIEWS.slice(0, needed)];
+        return cleaned.slice(0, limit);
       }
     } catch {
       // fallback
@@ -242,7 +237,7 @@ export const reviewService = {
 
     try {
       const apiRevs = await fetchApi<Review[]>(`/products/${productId}/reviews`);
-      if (apiRevs && apiRevs.length > 0) {
+      if (apiRevs && Array.isArray(apiRevs)) {
         const cleanedApi = apiRevs.map((r) => ({ ...r, userAvatar: undefined }));
         return { reviews: cleanedApi, isCustom: true };
       }

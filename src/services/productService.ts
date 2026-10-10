@@ -221,6 +221,7 @@ export const productService = {
   saveProductOrder,
   async getProducts(filters?: ProductFilterState): Promise<Product[]> {
     let apiProds: Product[] = [];
+    let apiSuccess = false;
     try {
       const queryParams = new URLSearchParams();
       if (filters?.categorySlug) queryParams.set('category', filters.categorySlug);
@@ -232,12 +233,13 @@ export const productService = {
       const prods = await fetchApi<Product[]>(`/products?${queryParams.toString()}`);
       if (Array.isArray(prods)) {
         apiProds = prods;
+        apiSuccess = true;
       }
     } catch {
       // API Fallback
     }
 
-    let result = mergeProducts(apiProds, MOCK_PRODUCTS);
+    let result = mergeProducts(apiProds, apiSuccess ? [] : MOCK_PRODUCTS);
 
     if (filters?.categorySlug) {
       const catQuery = filters.categorySlug.toLowerCase();

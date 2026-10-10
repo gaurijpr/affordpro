@@ -142,17 +142,10 @@ export const getTestimonials = async (req: Request, res: Response): Promise<void
       console.warn('Testimonial DB Query notice:', e);
     }
 
-    let result = [...dbTestimonials];
-    if (result.length < limit) {
-      const needed = limit - result.length;
-      const fill = DEFAULT_CREATOR_TESTIMONIALS.slice(0, needed);
-      result = [...result, ...fill];
-    }
-
     res.json({
       success: true,
-      total: result.length,
-      testimonials: result.slice(0, limit),
+      total: dbTestimonials.length,
+      testimonials: dbTestimonials,
     });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
